@@ -202,3 +202,14 @@ export interface LayerItem {
   depth: number;
   children?: LayerItem[];
 }
+
+// Version history types
+export interface CanvasVersion {
+  id: string;
+  name: string;
+  shapes: Record<string, CanvasShape>;
+  groups: Record<string, ShapeGroup>;
+  timestamp: number;
+  createdBy: string;
+  createdByName: string;
+}

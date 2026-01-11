@@ -5,6 +5,7 @@ import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { PresencePanel } from '../panels/PresencePanel';
+import { VersionHistoryPanel } from '../panels/VersionHistoryPanel';
 
 interface HeaderProps {
   canvasName?: string;
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ canvasName, onExport }) => {
   const { logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(canvasName || storeName);
 
@@ -117,6 +119,17 @@ export const Header: React.FC<HeaderProps> = ({ canvasName, onExport }) => {
 
       {/* Right section */}
       <div className="flex items-center gap-4">
+        {/* Version History button */}
+        <button
+          onClick={() => setShowVersionHistory(true)}
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Version History"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
         {/* Settings button */}
         <div className="relative">
           <button
@@ -228,6 +241,12 @@ export const Header: React.FC<HeaderProps> = ({ canvasName, onExport }) => {
           </div>
         )}
       </div>
+
+      {/* Version History Modal */}
+      <VersionHistoryPanel
+        isOpen={showVersionHistory}
+        onClose={() => setShowVersionHistory(false)}
+      />
     </header>
   );
 };
