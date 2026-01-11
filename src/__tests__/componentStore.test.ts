@@ -133,7 +133,7 @@ describe('Component Store', () => {
     });
 
     it('should delete a component', () => {
-      const { createComponent, deleteComponent, getComponent, components } = useComponentStore.getState();
+      const { createComponent, deleteComponent } = useComponentStore.getState();
 
       const componentId = createComponent('To Delete', mockShapes, 'user1');
       expect(Object.keys(useComponentStore.getState().components).length).toBe(1);
@@ -177,7 +177,7 @@ describe('Component Store', () => {
 
   describe('Color Token Management', () => {
     it('should add a color token', () => {
-      const { addColorToken, designTokens } = useComponentStore.getState();
+      const { addColorToken } = useComponentStore.getState();
 
       const id = addColorToken('Brand', '#FF5733');
 
@@ -190,7 +190,7 @@ describe('Component Store', () => {
     });
 
     it('should update a color token', () => {
-      const { updateColorToken, designTokens } = useComponentStore.getState();
+      const { updateColorToken } = useComponentStore.getState();
 
       updateColorToken('primary', { value: '#FF0000' });
 

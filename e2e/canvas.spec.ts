@@ -31,9 +31,10 @@ test.describe('CollabCanvas Application', () => {
 
     // Either auth form or canvas should be visible
     const authForm = page.locator('form').first();
-    const hasAuthForm = await authForm.isVisible().catch(() => false);
+    const isAuthFormVisible = await authForm.isVisible().catch(() => false);
 
-    // Just verify the page loaded successfully
+    // Just verify the page loaded successfully and content is present
+    expect(isAuthFormVisible || await page.title() !== '').toBeTruthy();
     expect(await page.title()).toContain('CollabCanvas');
   });
 });

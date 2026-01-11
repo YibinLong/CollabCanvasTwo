@@ -70,4 +70,5 @@ export const rtdb: Database = new Proxy({} as Database, {
   },
 });
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default null;

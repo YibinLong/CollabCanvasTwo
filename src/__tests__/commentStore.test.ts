@@ -1,5 +1,4 @@
 import { useCommentStore } from '@/store/commentStore';
-import type { Comment } from '@/types/canvas';
 
 describe('commentStore', () => {
   beforeEach(() => {
@@ -268,7 +267,7 @@ describe('commentStore', () => {
     });
 
     it('should get resolved comments', () => {
-      const id1 = useCommentStore.getState().addComment({
+      useCommentStore.getState().addComment({
         x: 100,
         y: 200,
         text: 'Open comment',

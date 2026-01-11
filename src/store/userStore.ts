@@ -78,7 +78,8 @@ export const useUserStore = create<UserStore>((set) => ({
     })),
   removeOnlineUser: (userId) =>
     set((state) => {
-      const { [userId]: _, ...rest } = state.onlineUsers;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [userId]: _removed, ...rest } = state.onlineUsers;
       return { onlineUsers: rest };
     }),
   updateOnlineUser: (userId, updates) =>
@@ -101,7 +102,8 @@ export const useUserStore = create<UserStore>((set) => ({
     })),
   removeCursor: (odId) =>
     set((state) => {
-      const { [odId]: _, ...rest } = state.cursors;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [odId]: _removed, ...rest } = state.cursors;
       return { cursors: rest };
     }),
 

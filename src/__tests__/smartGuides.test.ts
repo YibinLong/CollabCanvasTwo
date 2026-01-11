@@ -117,7 +117,8 @@ describe('SmartGuides', () => {
       const moving = createBounds('moving', 175, 200, 50, 50); // centerX = 200, left = 175
       const others = [createBounds('target', 75, 100, 50, 50)]; // centerX = 100, left = 75
 
-      const result = calculateSnapGuides(moving, others, 5);
+      // This tests edges not aligning
+      calculateSnapGuides(moving, others, 5);
 
       // Left edges: 175 vs 75 = 100 pixels (not within threshold)
       // Centers: 200 vs 100 = 100 pixels (not within threshold either)

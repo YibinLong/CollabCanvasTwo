@@ -223,3 +223,36 @@ export function exportToJSON(
 
   return JSON.stringify(exportData, null, 2);
 }
+
+/**
+ * Downloads canvas state as a JSON file
+ */
+export function downloadJSON(
+  shapes: Record<string, CanvasShape>,
+  canvasId: string,
+  filename: string,
+  metadata?: { name?: string; description?: string }
+): void {
+  const jsonString = exportToJSON(shapes, canvasId, metadata);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = filename.endsWith('.json') ? filename : `${filename}.json`;
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Downloads canvas as PNG using Konva stage
+ */
+export function downloadPNG(dataUrl: string, filename: string): void {
+  const link = document.createElement('a');
+  link.download = filename.endsWith('.png') ? filename : `${filename}.png`;
+  link.href = dataUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

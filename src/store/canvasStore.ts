@@ -465,7 +465,8 @@ export const useCanvasStore = create<CanvasStore>()(
       const newShapes = { ...shapes };
       group.shapeIds.forEach((id) => {
         if (newShapes[id]) {
-          const { groupId: _, ...shapeWithoutGroup } = newShapes[id];
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { groupId: _unusedGroupId, ...shapeWithoutGroup } = newShapes[id];
           newShapes[id] = shapeWithoutGroup as CanvasShape;
         }
       });

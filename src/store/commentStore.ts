@@ -78,7 +78,8 @@ export const useCommentStore = create<CommentStore>((set, get) => ({
 
   deleteComment: (id) => {
     set((state) => {
-      const { [id]: _, ...rest } = state.comments;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [id]: _deleted, ...rest } = state.comments;
       return {
         comments: rest,
         activeCommentId: state.activeCommentId === id ? null : state.activeCommentId,

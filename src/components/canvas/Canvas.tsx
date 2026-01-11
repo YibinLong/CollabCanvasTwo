@@ -104,7 +104,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
     addComment,
     updateComment,
     setIsAddingComment,
-    setPendingCommentPosition,
   } = useCommentStore();
 
   // Sort shapes by zIndex for proper layering
@@ -177,7 +176,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
 
   // Handle mouse move for cursor tracking
   const handleMouseMove = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    () => {
       const pos = getPointerPosition();
 
       // Broadcast cursor position
@@ -373,7 +372,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
     [updateShape, currentUser]
   );
 
-  // Handle shape drag with smart guides
+  // Handle shape drag with smart guides (prepared for drag snapping integration)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleShapeDrag = useCallback(
     (shapeId: string, x: number, y: number) => {
       const shape = shapes[shapeId];
@@ -408,7 +408,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
     [shapes, snapToGrid]
   );
 
-  // Clear guides when drag ends
+  // Clear guides when drag ends (prepared for drag snapping integration)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleShapeDragEnd = useCallback(() => {
     setActiveGuides([]);
   }, []);
