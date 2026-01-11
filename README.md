@@ -5,32 +5,50 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 ## Features
 
 ### Canvas
-- Pan and zoom with smooth scrolling
+- Pan and zoom with smooth scrolling (mousewheel + drag)
 - Multiple shape types: rectangles, circles, triangles, stars, lines, text
 - Shape transformations: move, resize, rotate, scale
 - Multi-select with shift-click or selection box
 - Keyboard shortcuts for quick actions
 - Grid and snap-to-grid support
-- Undo/redo history
+- Smart guides for shape alignment
+- Undo/redo history (50+ levels)
 
 ### Real-time Collaboration
 - Live cursor tracking across users
-- Real-time shape synchronization
-- Presence indicators showing online users
+- Real-time shape synchronization (<100ms latency)
+- Presence indicators showing online users with connection status
 - Optimistic updates for responsive feel
 - Conflict resolution with last-write-wins
+- Supports 5+ concurrent users
+
+### Collaborative Comments
+- Add comments/annotations to the canvas
+- Thread-based replies on comments
+- Resolve/unresolve comments
+- Filter by resolved/unresolved
+- Comment markers on canvas with hover preview
 
 ### AI Canvas Agent
 - Natural language commands to create and modify shapes
 - Supported commands:
-  - Create shapes: "Create a blue rectangle at position 100, 100"
-  - Create text: "Add text saying 'Hello World'"
-  - Move shapes: "Move the rectangle to 200, 300"
-  - Resize shapes: "Make the circle bigger"
-  - Change colors: "Change the rectangle to red"
-  - Delete shapes: "Delete the star"
-  - Arrange shapes: "Create a 3x3 grid of circles"
-  - Create UI components: "Create a login form"
+  - **Create shapes**: "Create a blue rectangle at position 100, 100"
+  - **Create text**: "Add text saying 'Hello World'"
+  - **Move shapes**: "Move the rectangle to 200, 300"
+  - **Resize shapes**: "Make the circle bigger"
+  - **Change colors**: "Change the rectangle to red"
+  - **Delete shapes**: "Delete the star"
+  - **Arrange shapes**: "Create a 3x3 grid of circles"
+  - **Align shapes**: "Align all rectangles left"
+  - **Distribute shapes**: "Distribute shapes evenly horizontally"
+  - **Arrange in column**: "Arrange shapes in a column with 20px spacing"
+  - **Space evenly**: "Space all shapes evenly"
+  - **Create UI components**: "Create a login form"
+
+### Export
+- Export canvas as PNG (high-quality raster)
+- Export canvas as SVG (scalable vector)
+- Export canvas as JSON (backup/restore)
 
 ### Advanced Features
 - Layers panel with visibility and lock controls
@@ -38,16 +56,18 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 - Alignment and distribution tools
 - Shape grouping and ungrouping
 - Z-index management (bring to front/send to back)
-- Export to PNG/SVG (client-side)
+- Version history with save/restore points
+- Smart guides with snap-to-shape
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16, React 19, TypeScript 5, Tailwind CSS
 - **Canvas**: Konva.js / react-konva
-- **State Management**: Zustand
-- **Authentication**: Firebase Auth
+- **State Management**: Zustand with subscribeWithSelector
+- **Authentication**: Firebase Auth (Email/Password, Google)
 - **Database**: Firebase Firestore (shapes), Firebase Realtime Database (cursors/presence)
 - **AI**: OpenAI GPT-4o with function calling
+- **Testing**: Jest, React Testing Library
 
 ## Getting Started
 
@@ -159,13 +179,16 @@ npm run test:coverage # Run tests with coverage
 
 1. Push your code to GitHub
 2. Import the project on [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
+3. Add environment variables in Vercel dashboard:
+   - All `NEXT_PUBLIC_FIREBASE_*` variables
+   - `OPENAI_API_KEY`
 4. Deploy
 
 The project is configured for seamless Vercel deployment with:
 - Automatic builds from Git pushes
 - Environment variable support
 - Edge functions for API routes
+- Optimized builds with Turbopack
 
 ## Project Structure
 
@@ -175,9 +198,14 @@ src/
     api/ai/route.ts       # AI API endpoint
     page.tsx              # Main entry point
   components/
-    canvas/               # Canvas components (Canvas, CanvasShape, Grid, etc.)
+    canvas/               # Canvas components
+      Canvas.tsx          # Main canvas with Konva
+      CanvasShape.tsx     # Shape renderer
+      Grid.tsx            # Grid overlay
+      SmartGuides.tsx     # Alignment guides
+      CommentMarker.tsx   # Comment indicators
     toolbar/              # Toolbar and property panel
-    panels/               # Layers and presence panels
+    panels/               # Layers, presence, comments panels
     auth/                 # Authentication components
     ai/                   # AI chat interface
   hooks/                  # Custom React hooks
@@ -187,10 +215,14 @@ src/
   store/                  # Zustand stores
     canvasStore.ts        # Canvas state
     userStore.ts          # User state
+    commentStore.ts       # Comments state
   lib/
     firebase/             # Firebase configuration
     ai/                   # AI agent implementation
+    exportUtils.ts        # PNG/SVG/JSON export utilities
+    smartGuidesUtils.ts   # Snap guide calculations
   types/                  # TypeScript types
+  __tests__/              # Test files
 ```
 
 ## Keyboard Shortcuts
@@ -202,19 +234,40 @@ src/
 | R | Rectangle tool |
 | C | Circle tool |
 | T | Text tool |
+| L | Line tool |
 | Delete/Backspace | Delete selected |
 | Escape | Deselect all |
 | Cmd/Ctrl+Z | Undo |
 | Cmd/Ctrl+Shift+Z | Redo |
+| Cmd/Ctrl+\ | Toggle layers panel |
+| Cmd/Ctrl+P | Toggle properties panel |
+| Cmd/Ctrl+Shift+E | Export as PNG |
 
 ## Performance
 
 - 60 FPS canvas rendering
 - <100ms object synchronization
 - <50ms cursor synchronization
+- Support for 500+ objects on canvas
+- 5+ concurrent users
 - Debounced shape syncing
 - Throttled cursor updates
 - Lazy Firebase initialization
+
+## Testing
+
+Run the test suite:
+```bash
+npm test
+```
+
+Test coverage includes:
+- Canvas store operations (add, update, delete, select, undo/redo)
+- User store state management
+- Comment store CRUD operations
+- Export utilities (SVG, JSON)
+- Smart guides calculations
+- Component rendering
 
 ## License
 
