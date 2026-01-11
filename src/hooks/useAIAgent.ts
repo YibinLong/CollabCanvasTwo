@@ -559,6 +559,68 @@ export const useAIAgent = () => {
         return `Created a ${variant} button with text "${text}".`;
       }
 
+      case 'arrangeInRow': {
+        const shapeIds = args.shapeIds as string[];
+        const gap = (args.gap as number) || 20;
+        const startX = (args.startX as number) || 100;
+        const y = args.y as number | undefined;
+
+        const shapesToArrange = shapeIds
+          .map((id) => findShapeByIdOrName(id))
+          .filter((s): s is CanvasShape => s !== undefined);
+
+        if (shapesToArrange.length < 2) return 'Need at least 2 shapes to arrange.';
+
+        let currentX = startX;
+        const targetY = y ?? shapesToArrange[0].y;
+
+        shapesToArrange.forEach((shape) => {
+          updateShape(shape.id, { x: currentX, y: targetY });
+          currentX += shape.width * shape.scaleX + gap;
+        });
+
+        return `Arranged ${shapesToArrange.length} shapes in a row.`;
+      }
+
+      case 'changeBlendMode': {
+        const shape = findShapeByIdOrName(args.shapeId as string);
+        if (!shape) return `Could not find shape "${args.shapeId}".`;
+        const blendMode = args.blendMode as string;
+        updateShape(shape.id, { blendMode: blendMode as CanvasShape['blendMode'] });
+        return `Changed blend mode of "${shape.name}" to ${blendMode}.`;
+      }
+
+      case 'createFrame': {
+        const x = (args.x as number) || 100;
+        const y = (args.y as number) || 100;
+        const width = (args.width as number) || 400;
+        const height = (args.height as number) || 300;
+        const name = (args.name as string) || 'Frame';
+
+        const frame = {
+          ...createBaseShape('frame', {
+            x, y, width, height,
+            fill: '#FFFFFF',
+            stroke: '#E5E7EB',
+            strokeWidth: 1,
+            name,
+          }),
+          childIds: [],
+        };
+
+        addShape(frame);
+        return `Created frame "${name}" at (${x}, ${y}) with size ${width}x${height}.`;
+      }
+
+      case 'getCanvasState': {
+        const shapeList = Object.values(shapesRef.current);
+        if (shapeList.length === 0) return 'The canvas is empty.';
+        const summary = shapeList
+          .map((s) => `- ${s.name} (${s.type}): id="${s.id}", position=(${Math.round(s.x)}, ${Math.round(s.y)}), size=${Math.round(s.width)}x${Math.round(s.height)}, color=${s.fill}`)
+          .join('\n');
+        return `Canvas has ${shapeList.length} shapes:\n${summary}`;
+      }
+
       default:
         return `Unknown tool: ${name}`;
     }
