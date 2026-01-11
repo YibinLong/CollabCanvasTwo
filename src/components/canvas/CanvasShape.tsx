@@ -50,7 +50,42 @@ const useImage = (src: string | undefined): HTMLImageElement | undefined => {
   return image;
 };
 
-export const CanvasShape: React.FC<CanvasShapeProps> = ({
+// Memoized shape comparison for performance
+const areShapePropsEqual = (
+  prevProps: CanvasShapeProps,
+  nextProps: CanvasShapeProps
+): boolean => {
+  // Check selection state first (most common change)
+  if (prevProps.isSelected !== nextProps.isSelected) return false;
+
+  // Compare shape properties that affect rendering
+  const prevShape = prevProps.shape;
+  const nextShape = nextProps.shape;
+
+  return (
+    prevShape.id === nextShape.id &&
+    prevShape.x === nextShape.x &&
+    prevShape.y === nextShape.y &&
+    prevShape.width === nextShape.width &&
+    prevShape.height === nextShape.height &&
+    prevShape.rotation === nextShape.rotation &&
+    prevShape.scaleX === nextShape.scaleX &&
+    prevShape.scaleY === nextShape.scaleY &&
+    prevShape.fill === nextShape.fill &&
+    prevShape.stroke === nextShape.stroke &&
+    prevShape.strokeWidth === nextShape.strokeWidth &&
+    prevShape.opacity === nextShape.opacity &&
+    prevShape.visible === nextShape.visible &&
+    prevShape.locked === nextShape.locked &&
+    prevShape.blendMode === nextShape.blendMode &&
+    prevShape.shadowEnabled === nextShape.shadowEnabled &&
+    prevShape.shadowColor === nextShape.shadowColor &&
+    prevShape.shadowBlur === nextShape.shadowBlur &&
+    prevShape.zIndex === nextShape.zIndex
+  );
+};
+
+const CanvasShapeComponent: React.FC<CanvasShapeProps> = ({
   shape,
   isSelected,
   onSelect,
@@ -321,3 +356,6 @@ export const CanvasShape: React.FC<CanvasShapeProps> = ({
     </>
   );
 };
+
+// Export memoized component for performance with 500+ objects
+export const CanvasShape = React.memo(CanvasShapeComponent, areShapePropsEqual);
