@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
 import { ColorPicker } from '@/components/ui/ColorPicker';
-import type { CanvasShape, TextShape } from '@/types/canvas';
+import type { CanvasShape, TextShape, BlendMode } from '@/types/canvas';
 
 export const PropertyPanel: React.FC = () => {
   const {
@@ -384,6 +384,75 @@ export const PropertyPanel: React.FC = () => {
           className="w-full"
         />
         <span className="text-xs text-gray-500">{Math.round((localValues.opacity || 1) * 100)}%</span>
+      </div>
+
+      {/* Blend Mode */}
+      <div className="mb-4">
+        <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Blend Mode</h4>
+        <select
+          value={singleShape?.blendMode || 'normal'}
+          onChange={(e) => handleUpdate({ blendMode: e.target.value as BlendMode })}
+          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="normal">Normal</option>
+          <option value="multiply">Multiply</option>
+          <option value="screen">Screen</option>
+          <option value="overlay">Overlay</option>
+          <option value="darken">Darken</option>
+          <option value="lighten">Lighten</option>
+          <option value="color-dodge">Color Dodge</option>
+          <option value="color-burn">Color Burn</option>
+          <option value="hard-light">Hard Light</option>
+          <option value="soft-light">Soft Light</option>
+          <option value="difference">Difference</option>
+          <option value="exclusion">Exclusion</option>
+        </select>
+      </div>
+
+      {/* Shadow */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-xs font-medium text-gray-500 uppercase">Shadow</h4>
+          <label className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={singleShape?.shadowEnabled || false}
+              onChange={(e) => handleUpdate({ shadowEnabled: e.target.checked })}
+              className="w-4 h-4 rounded border-gray-300"
+            />
+          </label>
+        </div>
+        {singleShape?.shadowEnabled && (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <PropertyInput
+                label="X"
+                value={singleShape.shadowOffsetX || 5}
+                onChange={(v) => handleUpdate({ shadowOffsetX: v })}
+                onBlur={() => {}}
+              />
+              <PropertyInput
+                label="Y"
+                value={singleShape.shadowOffsetY || 5}
+                onChange={(v) => handleUpdate({ shadowOffsetY: v })}
+                onBlur={() => {}}
+              />
+            </div>
+            <PropertyInput
+              label="Blur"
+              value={singleShape.shadowBlur || 10}
+              onChange={(v) => handleUpdate({ shadowBlur: Math.max(0, v) })}
+              onBlur={() => {}}
+            />
+            <div className="mt-2">
+              <ColorPicker
+                color={singleShape.shadowColor || '#000000'}
+                onChange={(color) => handleUpdate({ shadowColor: color })}
+                label="Shadow Color"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Corner Radius for rectangles */}

@@ -273,7 +273,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
       }
 
       // Handle shape creation tools
-      if (['rectangle', 'circle', 'triangle', 'star', 'line', 'text'].includes(currentTool.type)) {
+      if (['rectangle', 'circle', 'triangle', 'star', 'line', 'text', 'frame'].includes(currentTool.type)) {
         setIsDrawing(true);
         setDrawStart(snappedPos);
 
@@ -463,6 +463,16 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
           textDecoration: 'none',
           width: 200,
           height: 50,
+        };
+      case 'frame':
+        return {
+          ...baseShape,
+          type: 'frame',
+          fill: '#FFFFFF',
+          stroke: '#E5E7EB',
+          strokeWidth: 1,
+          name: 'Frame',
+          childIds: [],
         };
       default:
         return { ...baseShape, type: 'rectangle' } as CanvasShapeType;

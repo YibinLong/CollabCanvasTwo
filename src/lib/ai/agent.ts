@@ -352,6 +352,272 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'arrangeInColumn',
+      description: 'Arrange shapes in a vertical column',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'IDs or names of shapes to arrange',
+          },
+          x: {
+            type: 'number',
+            description: 'X position for the column',
+          },
+          startY: {
+            type: 'number',
+            description: 'Starting Y position',
+          },
+          gap: {
+            type: 'number',
+            description: 'Gap between shapes',
+          },
+        },
+        required: ['shapeIds'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'spaceEvenly',
+      description: 'Space shapes evenly in a horizontal or vertical direction',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'IDs or names of shapes to space',
+          },
+          direction: {
+            type: 'string',
+            enum: ['horizontal', 'vertical'],
+            description: 'Direction to space shapes',
+          },
+        },
+        required: ['shapeIds', 'direction'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'scaleShape',
+      description: 'Scale a shape by a multiplier',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape to scale',
+          },
+          scale: {
+            type: 'number',
+            description: 'Scale multiplier (e.g., 2 for twice as big, 0.5 for half)',
+          },
+        },
+        required: ['shapeId', 'scale'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'duplicateShape',
+      description: 'Duplicate a shape with an offset',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape to duplicate',
+          },
+          offsetX: {
+            type: 'number',
+            description: 'X offset for the duplicate',
+          },
+          offsetY: {
+            type: 'number',
+            description: 'Y offset for the duplicate',
+          },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'alignShapes',
+      description: 'Align multiple shapes to a common edge or center',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'IDs or names of shapes to align',
+          },
+          alignment: {
+            type: 'string',
+            enum: ['left', 'right', 'center', 'top', 'bottom', 'middle'],
+            description: 'Alignment direction',
+          },
+        },
+        required: ['shapeIds', 'alignment'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'distributeShapes',
+      description: 'Distribute shapes evenly with equal spacing',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'IDs or names of shapes to distribute',
+          },
+          direction: {
+            type: 'string',
+            enum: ['horizontal', 'vertical'],
+            description: 'Distribution direction',
+          },
+        },
+        required: ['shapeIds', 'direction'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'changeOpacity',
+      description: 'Change the opacity of a shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape',
+          },
+          opacity: {
+            type: 'number',
+            description: 'Opacity value from 0 (transparent) to 1 (opaque)',
+          },
+        },
+        required: ['shapeId', 'opacity'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'changeStroke',
+      description: 'Change the stroke (border) of a shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape',
+          },
+          strokeColor: {
+            type: 'string',
+            description: 'Stroke color (hex format)',
+          },
+          strokeWidth: {
+            type: 'number',
+            description: 'Stroke width in pixels',
+          },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'clearCanvas',
+      description: 'Remove all shapes from the canvas',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createButton',
+      description: 'Create a styled button component',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: {
+            type: 'string',
+            description: 'Button text',
+          },
+          x: {
+            type: 'number',
+            description: 'X position',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position',
+          },
+          style: {
+            type: 'string',
+            enum: ['primary', 'secondary', 'danger', 'success'],
+            description: 'Button style variant',
+          },
+        },
+        required: ['text'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createFrame',
+      description: 'Create a frame/artboard for organizing designs',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'Frame name',
+          },
+          x: {
+            type: 'number',
+            description: 'X position',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position',
+          },
+          width: {
+            type: 'number',
+            description: 'Frame width',
+          },
+          height: {
+            type: 'number',
+            description: 'Frame height',
+          },
+        },
+        required: ['name'],
+      },
+    },
+  },
 ];
 
 export interface AIAgentConfig {
@@ -472,6 +738,28 @@ Always explain what you did after executing commands.`,
         return this.createCard(args);
       case 'getCanvasState':
         return this.getCanvasState();
+      case 'arrangeInColumn':
+        return this.arrangeInColumn(args);
+      case 'spaceEvenly':
+        return this.spaceEvenly(args);
+      case 'scaleShape':
+        return this.scaleShape(args);
+      case 'duplicateShape':
+        return this.duplicateShapeByAI(args);
+      case 'alignShapes':
+        return this.alignShapes(args);
+      case 'distributeShapes':
+        return this.distributeShapes(args);
+      case 'changeOpacity':
+        return this.changeOpacity(args);
+      case 'changeStroke':
+        return this.changeStroke(args);
+      case 'clearCanvas':
+        return this.clearCanvas();
+      case 'createButton':
+        return this.createButton(args);
+      case 'createFrame':
+        return this.createFrame(args);
       default:
         return `Unknown tool: ${name}`;
     }
@@ -975,5 +1263,336 @@ Always explain what you did after executing commands.`,
     return Object.values(this.shapes).find(
       (shape) => shape.name.toLowerCase() === lowerName || shape.name.toLowerCase().includes(lowerName)
     );
+  }
+
+  private arrangeInColumn(args: {
+    shapeIds: string[];
+    x?: number;
+    startY?: number;
+    gap?: number;
+  }): string {
+    const x = args.x || 200;
+    const startY = args.startY || 100;
+    const gap = args.gap || 20;
+
+    let currentY = startY;
+    let count = 0;
+
+    for (const id of args.shapeIds) {
+      const shape = this.findShapeByIdOrName(id);
+      if (shape) {
+        this.onUpdateShape(shape.id, { x, y: currentY });
+        currentY += shape.height + gap;
+        count++;
+      }
+    }
+
+    return `Arranged ${count} shapes in a vertical column.`;
+  }
+
+  private spaceEvenly(args: {
+    shapeIds: string[];
+    direction: 'horizontal' | 'vertical';
+  }): string {
+    const foundShapes = args.shapeIds
+      .map((id) => this.findShapeByIdOrName(id))
+      .filter(Boolean) as CanvasShape[];
+
+    if (foundShapes.length < 3) {
+      return 'Need at least 3 shapes to space evenly.';
+    }
+
+    if (args.direction === 'horizontal') {
+      const sorted = [...foundShapes].sort((a, b) => a.x - b.x);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const totalSpace = (last.x + last.width) - first.x;
+      const totalShapeWidth = sorted.reduce((sum, s) => sum + s.width, 0);
+      const gap = (totalSpace - totalShapeWidth) / (sorted.length - 1);
+
+      let currentX = first.x;
+      sorted.forEach((shape) => {
+        this.onUpdateShape(shape.id, { x: currentX });
+        currentX += shape.width + gap;
+      });
+    } else {
+      const sorted = [...foundShapes].sort((a, b) => a.y - b.y);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const totalSpace = (last.y + last.height) - first.y;
+      const totalShapeHeight = sorted.reduce((sum, s) => sum + s.height, 0);
+      const gap = (totalSpace - totalShapeHeight) / (sorted.length - 1);
+
+      let currentY = first.y;
+      sorted.forEach((shape) => {
+        this.onUpdateShape(shape.id, { y: currentY });
+        currentY += shape.height + gap;
+      });
+    }
+
+    return `Spaced ${foundShapes.length} shapes evenly ${args.direction}ly.`;
+  }
+
+  private scaleShape(args: { shapeId: string; scale: number }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+    this.onUpdateShape(shape.id, {
+      width: shape.width * args.scale,
+      height: shape.height * args.scale,
+    });
+    return `Scaled "${shape.name}" by ${args.scale}x.`;
+  }
+
+  private duplicateShapeByAI(args: {
+    shapeId: string;
+    offsetX?: number;
+    offsetY?: number;
+  }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+
+    const offsetX = args.offsetX || 20;
+    const offsetY = args.offsetY || 20;
+
+    const newShape = {
+      ...shape,
+      id: nanoid(),
+      x: shape.x + offsetX,
+      y: shape.y + offsetY,
+      name: `${shape.name} (copy)`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    this.onAddShape(newShape);
+    return `Duplicated "${shape.name}" with offset (${offsetX}, ${offsetY}).`;
+  }
+
+  private alignShapes(args: {
+    shapeIds: string[];
+    alignment: 'left' | 'right' | 'center' | 'top' | 'bottom' | 'middle';
+  }): string {
+    const foundShapes = args.shapeIds
+      .map((id) => this.findShapeByIdOrName(id))
+      .filter(Boolean) as CanvasShape[];
+
+    if (foundShapes.length < 2) {
+      return 'Need at least 2 shapes to align.';
+    }
+
+    const bounds = {
+      left: Math.min(...foundShapes.map((s) => s.x)),
+      right: Math.max(...foundShapes.map((s) => s.x + s.width)),
+      top: Math.min(...foundShapes.map((s) => s.y)),
+      bottom: Math.max(...foundShapes.map((s) => s.y + s.height)),
+    };
+
+    foundShapes.forEach((shape) => {
+      let newX = shape.x;
+      let newY = shape.y;
+
+      switch (args.alignment) {
+        case 'left':
+          newX = bounds.left;
+          break;
+        case 'right':
+          newX = bounds.right - shape.width;
+          break;
+        case 'center':
+          newX = bounds.left + (bounds.right - bounds.left) / 2 - shape.width / 2;
+          break;
+        case 'top':
+          newY = bounds.top;
+          break;
+        case 'bottom':
+          newY = bounds.bottom - shape.height;
+          break;
+        case 'middle':
+          newY = bounds.top + (bounds.bottom - bounds.top) / 2 - shape.height / 2;
+          break;
+      }
+
+      this.onUpdateShape(shape.id, { x: newX, y: newY });
+    });
+
+    return `Aligned ${foundShapes.length} shapes to ${args.alignment}.`;
+  }
+
+  private distributeShapes(args: {
+    shapeIds: string[];
+    direction: 'horizontal' | 'vertical';
+  }): string {
+    const foundShapes = args.shapeIds
+      .map((id) => this.findShapeByIdOrName(id))
+      .filter(Boolean) as CanvasShape[];
+
+    if (foundShapes.length < 3) {
+      return 'Need at least 3 shapes to distribute.';
+    }
+
+    if (args.direction === 'horizontal') {
+      const sorted = [...foundShapes].sort((a, b) => a.x - b.x);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const totalWidth = sorted.reduce((sum, s) => sum + s.width, 0);
+      const availableSpace = (last.x + last.width) - first.x - totalWidth;
+      const gap = availableSpace / (sorted.length - 1);
+
+      let currentX = first.x;
+      sorted.forEach((shape) => {
+        this.onUpdateShape(shape.id, { x: currentX });
+        currentX += shape.width + gap;
+      });
+    } else {
+      const sorted = [...foundShapes].sort((a, b) => a.y - b.y);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const totalHeight = sorted.reduce((sum, s) => sum + s.height, 0);
+      const availableSpace = (last.y + last.height) - first.y - totalHeight;
+      const gap = availableSpace / (sorted.length - 1);
+
+      let currentY = first.y;
+      sorted.forEach((shape) => {
+        this.onUpdateShape(shape.id, { y: currentY });
+        currentY += shape.height + gap;
+      });
+    }
+
+    return `Distributed ${foundShapes.length} shapes ${args.direction}ly.`;
+  }
+
+  private changeOpacity(args: { shapeId: string; opacity: number }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+    const opacity = Math.max(0, Math.min(1, args.opacity));
+    this.onUpdateShape(shape.id, { opacity });
+    return `Changed opacity of "${shape.name}" to ${opacity}.`;
+  }
+
+  private changeStroke(args: {
+    shapeId: string;
+    strokeColor?: string;
+    strokeWidth?: number;
+  }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+
+    const updates: Partial<CanvasShape> = {};
+    if (args.strokeColor) updates.stroke = args.strokeColor;
+    if (args.strokeWidth !== undefined) updates.strokeWidth = args.strokeWidth;
+
+    this.onUpdateShape(shape.id, updates);
+    return `Changed stroke of "${shape.name}".`;
+  }
+
+  private clearCanvas(): string {
+    const shapeIds = Object.keys(this.shapes);
+    shapeIds.forEach((id) => this.onDeleteShape(id));
+    return `Cleared ${shapeIds.length} shapes from the canvas.`;
+  }
+
+  private createButton(args: {
+    text: string;
+    x?: number;
+    y?: number;
+    style?: 'primary' | 'secondary' | 'danger' | 'success';
+  }): string {
+    const x = args.x || 200;
+    const y = args.y || 200;
+    const style = args.style || 'primary';
+
+    const styleColors = {
+      primary: { bg: '#3B82F6', text: '#FFFFFF' },
+      secondary: { bg: '#6B7280', text: '#FFFFFF' },
+      danger: { bg: '#EF4444', text: '#FFFFFF' },
+      success: { bg: '#10B981', text: '#FFFFFF' },
+    };
+
+    const colors = styleColors[style];
+    const width = Math.max(120, args.text.length * 12);
+
+    // Button background
+    const buttonBg = this.createBaseShape('rectangle', {
+      x,
+      y,
+      width,
+      height: 44,
+      fill: colors.bg,
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: `${args.text} Button`,
+      cornerRadius: 8,
+    });
+    this.onAddShape(buttonBg);
+
+    // Button text
+    const buttonText = this.createBaseShape('text', {
+      x,
+      y: y + 10,
+      width,
+      height: 24,
+      fill: colors.text,
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: `${args.text} Button Text`,
+    }) as TextShape;
+    buttonText.text = args.text;
+    buttonText.fontSize = 16;
+    buttonText.fontFamily = 'Arial';
+    buttonText.fontStyle = 'bold';
+    buttonText.textAlign = 'center';
+    buttonText.textDecoration = 'none';
+    this.onAddShape(buttonText);
+
+    return `Created a ${style} button with text "${args.text}".`;
+  }
+
+  private createFrame(args: {
+    name: string;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  }): string {
+    const x = args.x || 100;
+    const y = args.y || 100;
+    const width = args.width || 400;
+    const height = args.height || 300;
+
+    const frame = {
+      id: nanoid(),
+      type: 'frame' as const,
+      x,
+      y,
+      width,
+      height,
+      rotation: 0,
+      scaleX: 1,
+      scaleY: 1,
+      fill: '#FFFFFF',
+      stroke: '#E5E7EB',
+      strokeWidth: 1,
+      opacity: 1,
+      visible: true,
+      locked: false,
+      name: args.name,
+      zIndex: Object.keys(this.shapes).length,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      createdBy: this.userId,
+      lastEditedBy: this.userId,
+      childIds: [],
+    };
+
+    this.onAddShape(frame as unknown as CanvasShape);
+    return `Created frame "${args.name}" at (${x}, ${y}) with size ${width}x${height}.`;
   }
 }

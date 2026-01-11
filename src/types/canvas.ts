@@ -22,6 +22,24 @@ export interface Transform {
   scaleY: number;
 }
 
+export type BlendMode =
+  | 'normal'
+  | 'multiply'
+  | 'screen'
+  | 'overlay'
+  | 'darken'
+  | 'lighten'
+  | 'color-dodge'
+  | 'color-burn'
+  | 'hard-light'
+  | 'soft-light'
+  | 'difference'
+  | 'exclusion'
+  | 'hue'
+  | 'saturation'
+  | 'color'
+  | 'luminosity';
+
 export interface BaseShape {
   id: string;
   type: ShapeType;
@@ -41,6 +59,12 @@ export interface BaseShape {
   name: string;
   zIndex: number;
   groupId?: string;
+  blendMode?: BlendMode;
+  shadowEnabled?: boolean;
+  shadowColor?: string;
+  shadowBlur?: number;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
   createdAt: number;
   updatedAt: number;
   createdBy: string;
@@ -89,6 +113,21 @@ export interface ImageShape extends BaseShape {
   src: string;
 }
 
+// Auto-layout types (needed before Frame)
+export interface AutoLayoutConfig {
+  direction: 'horizontal' | 'vertical';
+  gap: number;
+  padding: number;
+  alignment: 'start' | 'center' | 'end' | 'stretch';
+  wrap: boolean;
+}
+
+export interface Frame extends BaseShape {
+  type: 'frame';
+  autoLayout?: AutoLayoutConfig;
+  childIds: string[];
+}
+
 export type CanvasShape =
   | RectangleShape
   | CircleShape
@@ -96,7 +135,8 @@ export type CanvasShape =
   | TextShape
   | TriangleShape
   | StarShape
-  | ImageShape;
+  | ImageShape
+  | Frame;
 
 export interface ShapeGroup {
   id: string;
@@ -239,17 +279,47 @@ export interface CommentReply {
   createdAt: number;
 }
 
-// Auto-layout types
-export interface AutoLayoutConfig {
-  direction: 'horizontal' | 'vertical';
-  gap: number;
-  padding: number;
-  alignment: 'start' | 'center' | 'end' | 'stretch';
-  wrap: boolean;
+// Component/Symbol system types
+export interface Component {
+  id: string;
+  name: string;
+  description?: string;
+  shapes: CanvasShape[];
+  width: number;
+  height: number;
+  createdAt: number;
+  updatedAt: number;
+  createdBy: string;
 }
 
-export interface Frame extends BaseShape {
-  type: 'frame';
-  autoLayout?: AutoLayoutConfig;
-  childIds: string[];
+export interface ComponentInstance {
+  id: string;
+  componentId: string;
+  x: number;
+  y: number;
+  scaleX: number;
+  scaleY: number;
+  overrides?: Record<string, Partial<CanvasShape>>; // Shape ID -> overridden properties
+}
+
+// Design Tokens / Styles system
+export interface ColorToken {
+  id: string;
+  name: string;
+  value: string; // hex color
+}
+
+export interface TextStyle {
+  id: string;
+  name: string;
+  fontSize: number;
+  fontFamily: string;
+  fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic';
+  letterSpacing?: number;
+  lineHeight?: number;
+}
+
+export interface DesignTokens {
+  colors: ColorToken[];
+  textStyles: TextStyle[];
 }

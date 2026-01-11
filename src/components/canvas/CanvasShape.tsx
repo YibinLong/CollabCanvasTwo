@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
   Rect,
   Circle,
@@ -9,9 +9,12 @@ import {
   RegularPolygon,
   Star,
   Transformer,
+  Image as KonvaImage,
+  Group,
+  Path,
 } from 'react-konva';
 import Konva from 'konva';
-import type { CanvasShape as CanvasShapeType } from '@/types/canvas';
+import type { CanvasShape as CanvasShapeType, Frame, ImageShape } from '@/types/canvas';
 
 interface CanvasShapeProps {
   shape: CanvasShapeType;
@@ -20,6 +23,31 @@ interface CanvasShapeProps {
   onChange: (updates: Partial<CanvasShapeType>) => void;
   onTransformEnd: (updates: Partial<CanvasShapeType>) => void;
 }
+
+// Custom hook for loading images
+const useImage = (src: string | undefined): HTMLImageElement | undefined => {
+  const [image, setImage] = useState<HTMLImageElement | undefined>(undefined);
+
+  useEffect(() => {
+    if (!src) {
+      setImage(undefined);
+      return;
+    }
+
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => setImage(img);
+    img.onerror = () => setImage(undefined);
+    img.src = src;
+
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [src]);
+
+  return image;
+};
 
 export const CanvasShape: React.FC<CanvasShapeProps> = ({
   shape,
@@ -32,6 +60,10 @@ export const CanvasShape: React.FC<CanvasShapeProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const shapeRef = useRef<any>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
+
+  // Load image if this is an image shape
+  const imageShape = shape.type === 'image' ? (shape as ImageShape) : undefined;
+  const loadedImage = useImage(imageShape?.src);
 
   useEffect(() => {
     if (isSelected && transformerRef.current && shapeRef.current) {
@@ -74,6 +106,29 @@ export const CanvasShape: React.FC<CanvasShapeProps> = ({
     });
   }, [onTransformEnd]);
 
+  // Map CSS blend modes to Konva globalCompositeOperation
+  const getBlendModeOperation = (blendMode?: string): GlobalCompositeOperation => {
+    const blendModeMap: Record<string, GlobalCompositeOperation> = {
+      'normal': 'source-over',
+      'multiply': 'multiply',
+      'screen': 'screen',
+      'overlay': 'overlay',
+      'darken': 'darken',
+      'lighten': 'lighten',
+      'color-dodge': 'color-dodge',
+      'color-burn': 'color-burn',
+      'hard-light': 'hard-light',
+      'soft-light': 'soft-light',
+      'difference': 'difference',
+      'exclusion': 'exclusion',
+      'hue': 'hue',
+      'saturation': 'saturation',
+      'color': 'color',
+      'luminosity': 'luminosity',
+    };
+    return blendModeMap[blendMode || 'normal'] || 'source-over';
+  };
+
   const commonProps = {
     ref: shapeRef,
     x: shape.x,
@@ -92,6 +147,15 @@ export const CanvasShape: React.FC<CanvasShapeProps> = ({
     onDragStart: handleDragStart,
     onDragEnd: handleDragEnd,
     onTransformEnd: handleTransformEnd,
+    globalCompositeOperation: getBlendModeOperation(shape.blendMode),
+    // Shadow support
+    ...(shape.shadowEnabled && {
+      shadowColor: shape.shadowColor || '#000000',
+      shadowBlur: shape.shadowBlur || 10,
+      shadowOffsetX: shape.shadowOffsetX || 5,
+      shadowOffsetY: shape.shadowOffsetY || 5,
+      shadowOpacity: 0.5,
+    }),
   };
 
   const renderShape = () => {
@@ -156,6 +220,70 @@ export const CanvasShape: React.FC<CanvasShapeProps> = ({
             innerRadius={shape.innerRadius || shape.width / 4}
             outerRadius={shape.outerRadius || shape.width / 2}
           />
+        );
+
+      case 'image':
+        if (!loadedImage) {
+          // Placeholder while loading
+          return (
+            <Rect
+              {...commonProps}
+              width={shape.width}
+              height={shape.height}
+              fill="#F3F4F6"
+              stroke="#D1D5DB"
+              strokeWidth={1}
+            />
+          );
+        }
+        return (
+          <KonvaImage
+            {...commonProps}
+            image={loadedImage}
+            width={shape.width}
+            height={shape.height}
+          />
+        );
+
+      case 'frame':
+        // Frame is a container with optional auto-layout
+        const frameShape = shape as unknown as Frame;
+        return (
+          <Group
+            ref={shapeRef}
+            x={shape.x}
+            y={shape.y}
+            rotation={shape.rotation}
+            scaleX={shape.scaleX}
+            scaleY={shape.scaleY}
+            opacity={shape.opacity}
+            visible={shape.visible}
+            draggable={!shape.locked}
+            onClick={onSelect as (e: Konva.KonvaEventObject<MouseEvent>) => void}
+            onTap={onSelect as (e: Konva.KonvaEventObject<TouchEvent>) => void}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onTransformEnd={handleTransformEnd}
+          >
+            {/* Frame background */}
+            <Rect
+              width={shape.width}
+              height={shape.height}
+              fill={shape.fill || '#FFFFFF'}
+              stroke={shape.stroke || '#E5E7EB'}
+              strokeWidth={shape.strokeWidth || 1}
+              cornerRadius={4}
+            />
+            {/* Frame label */}
+            <Text
+              x={0}
+              y={-20}
+              text={shape.name || 'Frame'}
+              fontSize={12}
+              fontFamily="Arial"
+              fill="#6B7280"
+            />
+          </Group>
         );
 
       default:
