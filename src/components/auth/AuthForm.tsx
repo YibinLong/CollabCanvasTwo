@@ -84,9 +84,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         </div>
 
         {/* Mode Toggle */}
-        <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+        <div className="flex bg-gray-100 rounded-lg p-1 mb-6" role="tablist" aria-label="Authentication mode">
           <button
             onClick={() => setMode('signin')}
+            role="tab"
+            aria-selected={mode === 'signin'}
+            aria-label="Sign in to your account"
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
               mode === 'signin'
                 ? 'bg-white text-gray-900 shadow-sm'
@@ -97,6 +100,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           </button>
           <button
             onClick={() => setMode('signup')}
+            role="tab"
+            aria-selected={mode === 'signup'}
+            aria-label="Create a new account"
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
               mode === 'signup'
                 ? 'bg-white text-gray-900 shadow-sm'
@@ -164,6 +170,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={isLoading}
+            aria-label={mode === 'signin' ? 'Sign in to your account' : 'Create your account'}
+            title={mode === 'signin' ? 'Sign In' : 'Create Account'}
             className={`w-full py-3 px-4 bg-blue-500 text-white font-medium rounded-lg transition-all
               ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-600'}
             `}
@@ -193,6 +201,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         <button
           onClick={handleGoogleSignIn}
           disabled={isLoading}
+          aria-label="Sign in with Google"
+          title="Continue with Google"
           className={`w-full py-3 px-4 border border-gray-300 rounded-lg font-medium transition-all flex items-center justify-center gap-3
             ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-50'}
           `}

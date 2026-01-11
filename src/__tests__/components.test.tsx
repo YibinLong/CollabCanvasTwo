@@ -80,9 +80,9 @@ describe('UI Components', () => {
       const { AuthForm } = await import('@/components/auth/AuthForm');
       render(<AuthForm />);
 
-      // Click on "Sign Up" button
-      const signUpBtn = screen.getByRole('button', { name: /sign up/i });
-      fireEvent.click(signUpBtn);
+      // Click on "Sign Up" tab (now uses role="tab")
+      const signUpTab = screen.getByRole('tab', { name: /create a new account/i });
+      fireEvent.click(signUpTab);
 
       // Should now show name field for signup
       expect(screen.getByPlaceholderText('Your name')).toBeInTheDocument();

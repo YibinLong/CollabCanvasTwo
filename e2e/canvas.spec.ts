@@ -173,12 +173,23 @@ test.describe('Accessibility', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Check that buttons have titles or aria-labels
-    const buttons = page.locator('button[title], button[aria-label]');
-    const accessibleButtonCount = await buttons.count();
+    // Wait for either auth form or canvas to load (whichever appears first)
+    // The page shows a loading state initially, so we need to wait for content
+    try {
+      await page.waitForSelector('[role="tab"], button[title], button[aria-label]', { timeout: 5000 });
+    } catch {
+      // If none found after timeout, that's what we're testing
+    }
 
-    // Should have some accessible buttons
-    expect(accessibleButtonCount).toBeGreaterThan(0);
+    // Check for accessible elements (buttons with title/aria-label, or tabs with aria-label)
+    const accessibleButtons = page.locator('button[title], button[aria-label]');
+    const accessibleTabs = page.locator('[role="tab"][aria-label]');
+
+    const accessibleButtonCount = await accessibleButtons.count();
+    const accessibleTabCount = await accessibleTabs.count();
+
+    // Should have some accessible elements (either buttons or tabs, depending on auth state)
+    expect(accessibleButtonCount + accessibleTabCount).toBeGreaterThan(0);
   });
 
   test('should have proper focus management', async ({ page }) => {
