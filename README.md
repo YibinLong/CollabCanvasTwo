@@ -2,7 +2,7 @@
 
 A real-time collaborative design tool with AI-powered canvas manipulation. Built with Next.js, Firebase, and OpenAI.
 
-**Live Demo**: [Deploy on Vercel]
+**Live Demo**: *Deploy to Vercel to get your live demo URL*
 
 ## Table of Contents
 
