@@ -13,7 +13,7 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^nanoid$': '<rootDir>/src/__mocks__/nanoid.js',
   },
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/', '<rootDir>/e2e/'],
   transformIgnorePatterns: [
     '/node_modules/(?!(nanoid|uuid)/)',
   ],

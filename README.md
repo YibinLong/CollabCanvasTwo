@@ -6,13 +6,17 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 
 ### Canvas
 - Pan and zoom with smooth scrolling (mousewheel + drag)
-- Multiple shape types: rectangles, circles, triangles, stars, lines, text
+- Multiple shape types: rectangles, circles, triangles, stars, lines, text, images, frames
 - Shape transformations: move, resize, rotate, scale
 - Multi-select with shift-click or selection box
 - Keyboard shortcuts for quick actions
 - Grid and snap-to-grid support
 - Smart guides for shape alignment
 - Undo/redo history (50+ levels)
+- Image upload with drag-and-drop
+- Frames/artboards for organizing designs
+- Blend modes (16 types: normal, multiply, screen, overlay, etc.)
+- Shadow effects (color, blur, offset)
 
 ### Real-time Collaboration
 - Live cursor tracking across users
@@ -29,21 +33,23 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 - Filter by resolved/unresolved
 - Comment markers on canvas with hover preview
 
-### AI Canvas Agent
+### AI Canvas Agent (24+ commands)
 - Natural language commands to create and modify shapes
 - Supported commands:
-  - **Create shapes**: "Create a blue rectangle at position 100, 100"
-  - **Create text**: "Add text saying 'Hello World'"
-  - **Move shapes**: "Move the rectangle to 200, 300"
-  - **Resize shapes**: "Make the circle bigger"
-  - **Change colors**: "Change the rectangle to red"
-  - **Delete shapes**: "Delete the star"
-  - **Arrange shapes**: "Create a 3x3 grid of circles"
-  - **Align shapes**: "Align all rectangles left"
-  - **Distribute shapes**: "Distribute shapes evenly horizontally"
-  - **Arrange in column**: "Arrange shapes in a column with 20px spacing"
-  - **Space evenly**: "Space all shapes evenly"
-  - **Create UI components**: "Create a login form"
+  - **Creation**: Create shapes, text, buttons, frames
+  - **Manipulation**: Move, resize, rotate, scale, duplicate
+  - **Styling**: Change colors, opacity, stroke, blend mode
+  - **Layout**: Arrange in grid, row, column; align; distribute; space evenly
+  - **Complex UI**: Create login forms, navigation bars, cards
+  - **Canvas**: Clear canvas, list shapes, get canvas state
+- Example commands:
+  - "Create a blue rectangle at position 100, 100"
+  - "Add text saying 'Hello World'"
+  - "Create a 3x3 grid of circles"
+  - "Create a login form"
+  - "Align all shapes left"
+  - "Scale the circle by 2x"
+  - "Create a primary button with text 'Submit'"
 
 ### Export
 - Export canvas as PNG (high-quality raster)
@@ -58,6 +64,10 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 - Z-index management (bring to front/send to back)
 - Version history with save/restore points
 - Smart guides with snap-to-shape
+- Component/symbol system for reusable elements
+- Design tokens (color palette, text styles)
+- Blend mode support for advanced compositing
+- Shadow effects with customizable properties
 
 ## Tech Stack
 
@@ -67,7 +77,7 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 - **Authentication**: Firebase Auth (Email/Password, Google)
 - **Database**: Firebase Firestore (shapes), Firebase Realtime Database (cursors/presence)
 - **AI**: OpenAI GPT-4o with function calling
-- **Testing**: Jest, React Testing Library
+- **Testing**: Jest, React Testing Library, Playwright (E2E)
 
 ## Getting Started
 
@@ -170,9 +180,11 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
-npm test             # Run tests
+npm test             # Run unit tests
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage
+npm run test:e2e     # Run E2E tests with Playwright
+npm run test:e2e:ui  # Run E2E tests with Playwright UI
 ```
 
 ## Deployment on Vercel
@@ -200,12 +212,12 @@ src/
   components/
     canvas/               # Canvas components
       Canvas.tsx          # Main canvas with Konva
-      CanvasShape.tsx     # Shape renderer
+      CanvasShape.tsx     # Shape renderer (with blend modes, shadows)
       Grid.tsx            # Grid overlay
       SmartGuides.tsx     # Alignment guides
       CommentMarker.tsx   # Comment indicators
     toolbar/              # Toolbar and property panel
-    panels/               # Layers, presence, comments panels
+    panels/               # Layers, presence, comments, version history
     auth/                 # Authentication components
     ai/                   # AI chat interface
   hooks/                  # Custom React hooks
@@ -213,16 +225,18 @@ src/
     useRealtimeSync.ts    # Real-time sync hook
     useAIAgent.ts         # AI agent hook
   store/                  # Zustand stores
-    canvasStore.ts        # Canvas state
-    userStore.ts          # User state
+    canvasStore.ts        # Canvas state (shapes, history, selection)
+    userStore.ts          # User state (presence, cursors)
     commentStore.ts       # Comments state
+    componentStore.ts     # Components and design tokens
   lib/
     firebase/             # Firebase configuration
-    ai/                   # AI agent implementation
+    ai/                   # AI agent implementation (24+ tools)
     exportUtils.ts        # PNG/SVG/JSON export utilities
     smartGuidesUtils.ts   # Snap guide calculations
-  types/                  # TypeScript types
-  __tests__/              # Test files
+  types/                  # TypeScript types (with blend modes, components)
+  __tests__/              # Unit test files (110+ tests)
+e2e/                      # Playwright E2E tests
 ```
 
 ## Keyboard Shortcuts
@@ -232,9 +246,11 @@ src/
 | V | Select tool |
 | H | Hand/pan tool |
 | R | Rectangle tool |
-| C | Circle tool |
+| O | Circle tool |
 | T | Text tool |
 | L | Line tool |
+| F | Frame tool |
+| C | Comment tool |
 | Delete/Backspace | Delete selected |
 | Escape | Deselect all |
 | Cmd/Ctrl+Z | Undo |
@@ -258,16 +274,19 @@ src/
 
 Run the test suite:
 ```bash
-npm test
+npm test           # Unit tests (110+ tests)
+npm run test:e2e   # E2E tests with Playwright
 ```
 
 Test coverage includes:
 - Canvas store operations (add, update, delete, select, undo/redo)
 - User store state management
 - Comment store CRUD operations
+- Component store (components, design tokens)
 - Export utilities (SVG, JSON)
 - Smart guides calculations
 - Component rendering
+- E2E tests for page loading, toolbar, keyboard shortcuts
 
 ## License
 
