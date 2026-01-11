@@ -6,6 +6,7 @@ import { useUserStore } from '@/store/userStore';
 import { useAuth } from '@/hooks/useAuth';
 import { PresencePanel } from '../panels/PresencePanel';
 import { VersionHistoryPanel } from '../panels/VersionHistoryPanel';
+import { PrototypePreview } from '../prototype/PrototypePreview';
 
 interface HeaderProps {
   canvasName?: string;
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ canvasName, onExport }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(canvasName || storeName);
 
@@ -119,6 +121,18 @@ export const Header: React.FC<HeaderProps> = ({ canvasName, onExport }) => {
 
       {/* Right section */}
       <div className="flex items-center gap-4">
+        {/* Preview/Prototype button */}
+        <button
+          onClick={() => setShowPreview(true)}
+          className="px-3 py-1.5 bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
+          title="Preview Prototype (P)"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Preview
+        </button>
+
         {/* Version History button */}
         <button
           onClick={() => setShowVersionHistory(true)}
@@ -247,6 +261,11 @@ export const Header: React.FC<HeaderProps> = ({ canvasName, onExport }) => {
         isOpen={showVersionHistory}
         onClose={() => setShowVersionHistory(false)}
       />
+
+      {/* Prototype Preview Modal */}
+      {showPreview && (
+        <PrototypePreview onClose={() => setShowPreview(false)} />
+      )}
     </header>
   );
 };

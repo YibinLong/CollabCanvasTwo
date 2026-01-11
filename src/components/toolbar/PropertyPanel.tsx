@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
 import { ColorPicker } from '@/components/ui/ColorPicker';
+import { InteractionPanel } from '@/components/prototype/InteractionPanel';
 import type { CanvasShape, TextShape, BlendMode } from '@/types/canvas';
 
 export const PropertyPanel: React.FC = () => {
@@ -614,6 +615,14 @@ export const PropertyPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Interactions (Prototyping) */}
+      <div className="border-t border-gray-200 mt-4">
+        <h4 className="text-xs font-medium text-gray-500 uppercase py-2 px-3 bg-gray-50">
+          Prototyping
+        </h4>
+        <InteractionPanel />
+      </div>
     </div>
   );
 };

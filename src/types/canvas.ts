@@ -204,7 +204,7 @@ export interface SelectionState {
 }
 
 export interface CanvasTool {
-  type: 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'pan' | 'hand' | 'frame' | 'comment';
+  type: 'select' | 'lasso' | 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'pan' | 'hand' | 'frame' | 'comment';
 }
 
 export interface SnapGuide {
@@ -322,4 +322,25 @@ export interface TextStyle {
 export interface DesignTokens {
   colors: ColorToken[];
   textStyles: TextStyle[];
+}
+
+// Prototyping/Interaction types (Tier 3 feature)
+export type InteractionTrigger = 'click' | 'hover' | 'drag';
+export type InteractionAction = 'navigate' | 'open-overlay' | 'scroll-to' | 'back';
+
+export interface Interaction {
+  id: string;
+  sourceShapeId: string;
+  trigger: InteractionTrigger;
+  action: InteractionAction;
+  targetFrameId?: string; // Frame to navigate to
+  animation?: 'instant' | 'dissolve' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down';
+  duration?: number; // ms
+}
+
+export interface PrototypeState {
+  isPreviewMode: boolean;
+  currentFrameId: string | null;
+  navigationHistory: string[];
+  interactions: Record<string, Interaction>;
 }
