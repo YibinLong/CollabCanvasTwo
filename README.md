@@ -140,7 +140,7 @@ Natural language commands to create and modify shapes:
 | State | Zustand with subscribeWithSelector |
 | Auth | Firebase Auth (Email/Password, Google OAuth) |
 | Database | Firebase Firestore (shapes), Realtime Database (cursors) |
-| AI | OpenAI GPT-4o with function calling (24+ tools) |
+| AI | OpenAI GPT-4o with function calling (30+ tools) |
 | Testing | Jest, React Testing Library, Playwright |
 | Deployment | Vercel (Edge Functions) |
 
@@ -408,9 +408,12 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
 | Shortcut | Action |
 |----------|--------|
 | V | Select tool |
+| Q | Lasso select tool |
 | H | Hand/pan tool |
 | R | Rectangle tool |
 | O | Circle tool |
+| A | Triangle tool |
+| S | Star tool |
 | T | Text tool |
 | L | Line tool |
 | F | Frame tool |
@@ -491,7 +494,7 @@ src/
 │   └── componentStore.ts     # Components, design tokens
 ├── lib/
 │   ├── firebase/config.ts    # Firebase initialization
-│   ├── ai/agent.ts           # AI agent (24+ tools)
+│   ├── ai/agent.ts           # AI agent (30+ tools)
 │   ├── exportUtils.ts        # PNG/SVG/JSON export
 │   └── smartGuidesUtils.ts   # Snap calculations
 ├── types/canvas.ts           # TypeScript definitions
