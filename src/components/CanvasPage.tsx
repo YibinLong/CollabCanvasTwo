@@ -297,14 +297,22 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
             <div className={`absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 text-sm rounded-full z-10 flex items-center gap-2 transition-all duration-300 ${
               connectionStatus === 'connected'
                 ? 'bg-green-100 text-green-800'
-                : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-red-100 text-red-800'
+                : connectionStatus === 'syncing'
+                  ? 'bg-blue-100 text-blue-800'
+                  : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
             }`}>
               {connectionStatus === 'connected' && (
                 <>
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   Connected
+                </>
+              )}
+              {connectionStatus === 'syncing' && (
+                <>
+                  <span className="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Syncing...
                 </>
               )}
               {connectionStatus === 'connecting' && (
