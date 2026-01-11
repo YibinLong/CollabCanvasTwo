@@ -652,6 +652,173 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'createSignupForm',
+      description: 'Create a signup/registration form with name, email, password fields and submit button',
+      parameters: {
+        type: 'object',
+        properties: {
+          x: {
+            type: 'number',
+            description: 'X position of the form',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position of the form',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createProfileCard',
+      description: 'Create a profile card with avatar, name, title/role, and optional bio',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'Person name',
+          },
+          title: {
+            type: 'string',
+            description: 'Job title or role',
+          },
+          bio: {
+            type: 'string',
+            description: 'Short bio or description',
+          },
+          x: {
+            type: 'number',
+            description: 'X position',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position',
+          },
+        },
+        required: ['name'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createHeroSection',
+      description: 'Create a hero section with headline, subheadline, and CTA button',
+      parameters: {
+        type: 'object',
+        properties: {
+          headline: {
+            type: 'string',
+            description: 'Main headline text',
+          },
+          subheadline: {
+            type: 'string',
+            description: 'Supporting text under the headline',
+          },
+          ctaText: {
+            type: 'string',
+            description: 'Call-to-action button text',
+          },
+          x: {
+            type: 'number',
+            description: 'X position',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createSearchBar',
+      description: 'Create a search bar with input field and search button/icon',
+      parameters: {
+        type: 'object',
+        properties: {
+          placeholder: {
+            type: 'string',
+            description: 'Placeholder text for the search input',
+          },
+          x: {
+            type: 'number',
+            description: 'X position',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position',
+          },
+          width: {
+            type: 'number',
+            description: 'Width of the search bar',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createFooter',
+      description: 'Create a footer section with links and copyright text',
+      parameters: {
+        type: 'object',
+        properties: {
+          links: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Footer link labels (e.g., ["Privacy", "Terms", "Contact"])',
+          },
+          copyrightText: {
+            type: 'string',
+            description: 'Copyright text',
+          },
+          x: {
+            type: 'number',
+            description: 'X position',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position',
+          },
+          width: {
+            type: 'number',
+            description: 'Width of the footer',
+          },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'centerShape',
+      description: 'Center a shape on the canvas (move to center position)',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape to center',
+          },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
 ];
 
 export interface AIAgentConfig {
@@ -798,6 +965,18 @@ Always explain what you did after executing commands.`,
         return this.changeBlendMode(args);
       case 'listShapes':
         return this.listShapes();
+      case 'createSignupForm':
+        return this.createSignupForm(args);
+      case 'createProfileCard':
+        return this.createProfileCard(args);
+      case 'createHeroSection':
+        return this.createHeroSection(args);
+      case 'createSearchBar':
+        return this.createSearchBar(args);
+      case 'createFooter':
+        return this.createFooter(args);
+      case 'centerShape':
+        return this.centerShape(args);
       default:
         return `Unknown tool: ${name}`;
     }
@@ -1655,5 +1834,589 @@ Always explain what you did after executing commands.`,
       .join('\n');
 
     return `Canvas has ${shapeList.length} shapes:\n${list}`;
+  }
+
+  private createSignupForm(args: { x?: number; y?: number }): string {
+    const x = args.x || 200;
+    const y = args.y || 100;
+    const width = 320;
+
+    // Form background
+    const formBg = this.createBaseShape('rectangle', {
+      x: x - 24,
+      y: y - 24,
+      width: width + 48,
+      height: 420,
+      fill: '#FFFFFF',
+      stroke: '#E5E7EB',
+      strokeWidth: 1,
+      name: 'Signup Form Background',
+      cornerRadius: 12,
+    });
+    this.onAddShape(formBg);
+
+    // Title
+    const title = this.createBaseShape('text', {
+      x,
+      y,
+      width,
+      height: 40,
+      fill: '#1F2937',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Signup Title',
+    }) as TextShape;
+    title.text = 'Create Account';
+    title.fontSize = 28;
+    title.fontFamily = 'Arial';
+    title.fontStyle = 'bold';
+    title.textAlign = 'center';
+    title.textDecoration = 'none';
+    this.onAddShape(title);
+
+    // Name label
+    const nameLabel = this.createBaseShape('text', {
+      x,
+      y: y + 55,
+      width,
+      height: 20,
+      fill: '#4B5563',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Name Label',
+    }) as TextShape;
+    nameLabel.text = 'Full Name';
+    nameLabel.fontSize = 14;
+    nameLabel.fontFamily = 'Arial';
+    nameLabel.fontStyle = 'normal';
+    nameLabel.textAlign = 'left';
+    nameLabel.textDecoration = 'none';
+    this.onAddShape(nameLabel);
+
+    // Name input
+    const nameInput = this.createBaseShape('rectangle', {
+      x,
+      y: y + 80,
+      width,
+      height: 44,
+      fill: '#F9FAFB',
+      stroke: '#D1D5DB',
+      strokeWidth: 1,
+      name: 'Name Input',
+      cornerRadius: 6,
+    });
+    this.onAddShape(nameInput);
+
+    // Email label
+    const emailLabel = this.createBaseShape('text', {
+      x,
+      y: y + 140,
+      width,
+      height: 20,
+      fill: '#4B5563',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Email Label',
+    }) as TextShape;
+    emailLabel.text = 'Email Address';
+    emailLabel.fontSize = 14;
+    emailLabel.fontFamily = 'Arial';
+    emailLabel.fontStyle = 'normal';
+    emailLabel.textAlign = 'left';
+    emailLabel.textDecoration = 'none';
+    this.onAddShape(emailLabel);
+
+    // Email input
+    const emailInput = this.createBaseShape('rectangle', {
+      x,
+      y: y + 165,
+      width,
+      height: 44,
+      fill: '#F9FAFB',
+      stroke: '#D1D5DB',
+      strokeWidth: 1,
+      name: 'Email Input',
+      cornerRadius: 6,
+    });
+    this.onAddShape(emailInput);
+
+    // Password label
+    const passwordLabel = this.createBaseShape('text', {
+      x,
+      y: y + 225,
+      width,
+      height: 20,
+      fill: '#4B5563',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Password Label',
+    }) as TextShape;
+    passwordLabel.text = 'Password';
+    passwordLabel.fontSize = 14;
+    passwordLabel.fontFamily = 'Arial';
+    passwordLabel.fontStyle = 'normal';
+    passwordLabel.textAlign = 'left';
+    passwordLabel.textDecoration = 'none';
+    this.onAddShape(passwordLabel);
+
+    // Password input
+    const passwordInput = this.createBaseShape('rectangle', {
+      x,
+      y: y + 250,
+      width,
+      height: 44,
+      fill: '#F9FAFB',
+      stroke: '#D1D5DB',
+      strokeWidth: 1,
+      name: 'Password Input',
+      cornerRadius: 6,
+    });
+    this.onAddShape(passwordInput);
+
+    // Submit button
+    const submitButton = this.createBaseShape('rectangle', {
+      x,
+      y: y + 320,
+      width,
+      height: 48,
+      fill: '#10B981',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Signup Submit Button',
+      cornerRadius: 8,
+    });
+    this.onAddShape(submitButton);
+
+    // Button text
+    const buttonText = this.createBaseShape('text', {
+      x,
+      y: y + 332,
+      width,
+      height: 24,
+      fill: '#FFFFFF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Signup Button Text',
+    }) as TextShape;
+    buttonText.text = 'Create Account';
+    buttonText.fontSize = 16;
+    buttonText.fontFamily = 'Arial';
+    buttonText.fontStyle = 'bold';
+    buttonText.textAlign = 'center';
+    buttonText.textDecoration = 'none';
+    this.onAddShape(buttonText);
+
+    return 'Created a signup form with name, email, password fields, and submit button.';
+  }
+
+  private createProfileCard(args: {
+    name: string;
+    title?: string;
+    bio?: string;
+    x?: number;
+    y?: number;
+  }): string {
+    const x = args.x || 200;
+    const y = args.y || 150;
+    const width = 280;
+    const hasTitle = !!args.title;
+    const hasBio = !!args.bio;
+    const height = 200 + (hasBio ? 60 : 0);
+
+    // Card background
+    const cardBg = this.createBaseShape('rectangle', {
+      x,
+      y,
+      width,
+      height,
+      fill: '#FFFFFF',
+      stroke: '#E5E7EB',
+      strokeWidth: 1,
+      name: 'Profile Card Background',
+      cornerRadius: 16,
+    });
+    this.onAddShape(cardBg);
+
+    // Avatar circle
+    const avatar = this.createBaseShape('circle', {
+      x: x + width / 2 - 40,
+      y: y + 24,
+      width: 80,
+      height: 80,
+      fill: '#E5E7EB',
+      stroke: '#9CA3AF',
+      strokeWidth: 2,
+      name: 'Profile Avatar',
+    });
+    this.onAddShape(avatar);
+
+    // Avatar initials
+    const initials = args.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const initialsText = this.createBaseShape('text', {
+      x: x + width / 2 - 40,
+      y: y + 50,
+      width: 80,
+      height: 30,
+      fill: '#6B7280',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Profile Initials',
+    }) as TextShape;
+    initialsText.text = initials;
+    initialsText.fontSize = 28;
+    initialsText.fontFamily = 'Arial';
+    initialsText.fontStyle = 'bold';
+    initialsText.textAlign = 'center';
+    initialsText.textDecoration = 'none';
+    this.onAddShape(initialsText);
+
+    // Name
+    const nameText = this.createBaseShape('text', {
+      x: x + 16,
+      y: y + 120,
+      width: width - 32,
+      height: 28,
+      fill: '#1F2937',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Profile Name',
+    }) as TextShape;
+    nameText.text = args.name;
+    nameText.fontSize = 20;
+    nameText.fontFamily = 'Arial';
+    nameText.fontStyle = 'bold';
+    nameText.textAlign = 'center';
+    nameText.textDecoration = 'none';
+    this.onAddShape(nameText);
+
+    // Title
+    if (hasTitle) {
+      const titleText = this.createBaseShape('text', {
+        x: x + 16,
+        y: y + 150,
+        width: width - 32,
+        height: 24,
+        fill: '#6B7280',
+        stroke: 'transparent',
+        strokeWidth: 0,
+        name: 'Profile Title',
+      }) as TextShape;
+      titleText.text = args.title!;
+      titleText.fontSize = 14;
+      titleText.fontFamily = 'Arial';
+      titleText.fontStyle = 'normal';
+      titleText.textAlign = 'center';
+      titleText.textDecoration = 'none';
+      this.onAddShape(titleText);
+    }
+
+    // Bio
+    if (hasBio) {
+      const bioText = this.createBaseShape('text', {
+        x: x + 16,
+        y: y + (hasTitle ? 180 : 155),
+        width: width - 32,
+        height: 50,
+        fill: '#4B5563',
+        stroke: 'transparent',
+        strokeWidth: 0,
+        name: 'Profile Bio',
+      }) as TextShape;
+      bioText.text = args.bio!;
+      bioText.fontSize = 13;
+      bioText.fontFamily = 'Arial';
+      bioText.fontStyle = 'normal';
+      bioText.textAlign = 'center';
+      bioText.textDecoration = 'none';
+      this.onAddShape(bioText);
+    }
+
+    return `Created a profile card for "${args.name}"${args.title ? ` (${args.title})` : ''}.`;
+  }
+
+  private createHeroSection(args: {
+    headline?: string;
+    subheadline?: string;
+    ctaText?: string;
+    x?: number;
+    y?: number;
+  }): string {
+    const x = args.x || 100;
+    const y = args.y || 100;
+    const width = 600;
+    const headline = args.headline || 'Welcome to Our Platform';
+    const subheadline = args.subheadline || 'Build something amazing with our powerful tools and features.';
+    const ctaText = args.ctaText || 'Get Started';
+
+    // Hero background
+    const heroBg = this.createBaseShape('rectangle', {
+      x,
+      y,
+      width,
+      height: 320,
+      fill: '#1E40AF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Hero Background',
+      cornerRadius: 16,
+    });
+    this.onAddShape(heroBg);
+
+    // Headline
+    const headlineText = this.createBaseShape('text', {
+      x: x + 40,
+      y: y + 60,
+      width: width - 80,
+      height: 60,
+      fill: '#FFFFFF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Hero Headline',
+    }) as TextShape;
+    headlineText.text = headline;
+    headlineText.fontSize = 40;
+    headlineText.fontFamily = 'Arial';
+    headlineText.fontStyle = 'bold';
+    headlineText.textAlign = 'center';
+    headlineText.textDecoration = 'none';
+    this.onAddShape(headlineText);
+
+    // Subheadline
+    const subheadlineText = this.createBaseShape('text', {
+      x: x + 60,
+      y: y + 140,
+      width: width - 120,
+      height: 60,
+      fill: '#BFDBFE',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Hero Subheadline',
+    }) as TextShape;
+    subheadlineText.text = subheadline;
+    subheadlineText.fontSize = 18;
+    subheadlineText.fontFamily = 'Arial';
+    subheadlineText.fontStyle = 'normal';
+    subheadlineText.textAlign = 'center';
+    subheadlineText.textDecoration = 'none';
+    this.onAddShape(subheadlineText);
+
+    // CTA Button background
+    const ctaWidth = Math.max(180, ctaText.length * 14);
+    const ctaButton = this.createBaseShape('rectangle', {
+      x: x + (width - ctaWidth) / 2,
+      y: y + 230,
+      width: ctaWidth,
+      height: 52,
+      fill: '#FFFFFF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Hero CTA Button',
+      cornerRadius: 8,
+    });
+    this.onAddShape(ctaButton);
+
+    // CTA Button text
+    const ctaButtonText = this.createBaseShape('text', {
+      x: x + (width - ctaWidth) / 2,
+      y: y + 244,
+      width: ctaWidth,
+      height: 24,
+      fill: '#1E40AF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Hero CTA Text',
+    }) as TextShape;
+    ctaButtonText.text = ctaText;
+    ctaButtonText.fontSize = 18;
+    ctaButtonText.fontFamily = 'Arial';
+    ctaButtonText.fontStyle = 'bold';
+    ctaButtonText.textAlign = 'center';
+    ctaButtonText.textDecoration = 'none';
+    this.onAddShape(ctaButtonText);
+
+    return `Created a hero section with headline "${headline}" and CTA "${ctaText}".`;
+  }
+
+  private createSearchBar(args: {
+    placeholder?: string;
+    x?: number;
+    y?: number;
+    width?: number;
+  }): string {
+    const x = args.x || 200;
+    const y = args.y || 100;
+    const width = args.width || 400;
+    const placeholder = args.placeholder || 'Search...';
+    const buttonWidth = 48;
+
+    // Search container
+    const searchContainer = this.createBaseShape('rectangle', {
+      x,
+      y,
+      width,
+      height: 48,
+      fill: '#FFFFFF',
+      stroke: '#D1D5DB',
+      strokeWidth: 1,
+      name: 'Search Container',
+      cornerRadius: 8,
+    });
+    this.onAddShape(searchContainer);
+
+    // Search icon (placeholder circle)
+    const searchIcon = this.createBaseShape('circle', {
+      x: x + 14,
+      y: y + 14,
+      width: 20,
+      height: 20,
+      fill: 'transparent',
+      stroke: '#9CA3AF',
+      strokeWidth: 2,
+      name: 'Search Icon',
+    });
+    this.onAddShape(searchIcon);
+
+    // Placeholder text
+    const placeholderText = this.createBaseShape('text', {
+      x: x + 44,
+      y: y + 14,
+      width: width - 44 - buttonWidth - 10,
+      height: 20,
+      fill: '#9CA3AF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Search Placeholder',
+    }) as TextShape;
+    placeholderText.text = placeholder;
+    placeholderText.fontSize = 16;
+    placeholderText.fontFamily = 'Arial';
+    placeholderText.fontStyle = 'normal';
+    placeholderText.textAlign = 'left';
+    placeholderText.textDecoration = 'none';
+    this.onAddShape(placeholderText);
+
+    // Search button
+    const searchButton = this.createBaseShape('rectangle', {
+      x: x + width - buttonWidth - 4,
+      y: y + 4,
+      width: buttonWidth,
+      height: 40,
+      fill: '#3B82F6',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Search Button',
+      cornerRadius: 6,
+    });
+    this.onAddShape(searchButton);
+
+    // Search button text
+    const searchButtonText = this.createBaseShape('text', {
+      x: x + width - buttonWidth - 4,
+      y: y + 14,
+      width: buttonWidth,
+      height: 20,
+      fill: '#FFFFFF',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Search Button Icon',
+    }) as TextShape;
+    searchButtonText.text = 'Go';
+    searchButtonText.fontSize = 14;
+    searchButtonText.fontFamily = 'Arial';
+    searchButtonText.fontStyle = 'bold';
+    searchButtonText.textAlign = 'center';
+    searchButtonText.textDecoration = 'none';
+    this.onAddShape(searchButtonText);
+
+    return `Created a search bar with placeholder "${placeholder}".`;
+  }
+
+  private createFooter(args: {
+    links?: string[];
+    copyrightText?: string;
+    x?: number;
+    y?: number;
+    width?: number;
+  }): string {
+    const x = args.x || 0;
+    const y = args.y || 500;
+    const width = args.width || 800;
+    const links = args.links || ['Privacy', 'Terms', 'Contact'];
+    const copyrightText = args.copyrightText || '2024 Company Name. All rights reserved.';
+
+    // Footer background
+    const footerBg = this.createBaseShape('rectangle', {
+      x,
+      y,
+      width,
+      height: 80,
+      fill: '#1F2937',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Footer Background',
+    });
+    this.onAddShape(footerBg);
+
+    // Links row
+    const linkWidth = 100;
+    const totalLinksWidth = links.length * linkWidth;
+    const linkStartX = x + (width - totalLinksWidth) / 2;
+
+    links.forEach((link, index) => {
+      const linkText = this.createBaseShape('text', {
+        x: linkStartX + index * linkWidth,
+        y: y + 18,
+        width: linkWidth,
+        height: 20,
+        fill: '#9CA3AF',
+        stroke: 'transparent',
+        strokeWidth: 0,
+        name: `Footer Link ${index + 1}`,
+      }) as TextShape;
+      linkText.text = link;
+      linkText.fontSize = 14;
+      linkText.fontFamily = 'Arial';
+      linkText.fontStyle = 'normal';
+      linkText.textAlign = 'center';
+      linkText.textDecoration = 'none';
+      this.onAddShape(linkText);
+    });
+
+    // Copyright text
+    const copyright = this.createBaseShape('text', {
+      x: x + 20,
+      y: y + 50,
+      width: width - 40,
+      height: 20,
+      fill: '#6B7280',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: 'Footer Copyright',
+    }) as TextShape;
+    copyright.text = copyrightText;
+    copyright.fontSize = 12;
+    copyright.fontFamily = 'Arial';
+    copyright.fontStyle = 'normal';
+    copyright.textAlign = 'center';
+    copyright.textDecoration = 'none';
+    this.onAddShape(copyright);
+
+    return `Created a footer with links: ${links.join(', ')}.`;
+  }
+
+  private centerShape(args: { shapeId: string }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+
+    // Center position (assuming a typical canvas size of 1200x800)
+    const canvasCenterX = 600;
+    const canvasCenterY = 400;
+    const newX = canvasCenterX - (shape.width * shape.scaleX) / 2;
+    const newY = canvasCenterY - (shape.height * shape.scaleY) / 2;
+
+    this.onUpdateShape(shape.id, { x: newX, y: newY });
+    return `Centered "${shape.name}" on the canvas at (${Math.round(newX)}, ${Math.round(newY)}).`;
   }
 }

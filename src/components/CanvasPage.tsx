@@ -37,7 +37,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [showProperties, setShowProperties] = useState(true);
 
-  const { shapes, setCanvasId } = useCanvasStore();
+  const { shapes, setCanvasId, setCurrentTool } = useCanvasStore();
   const { currentUser, connectionStatus } = useUserStore();
   const { processCommand, isProcessing } = useAIAgent();
 
@@ -143,7 +143,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
     [processCommand]
   );
 
-  // Keyboard shortcuts for panels
+  // Keyboard shortcuts for panels and tools
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -167,11 +167,64 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
         e.preventDefault();
         handleExport('png');
       }
+
+      // Tool shortcuts (no modifiers)
+      if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+        switch (e.key.toLowerCase()) {
+          case 'v':
+            e.preventDefault();
+            setCurrentTool('select');
+            break;
+          case 'h':
+            e.preventDefault();
+            setCurrentTool('hand');
+            break;
+          case 'r':
+            e.preventDefault();
+            setCurrentTool('rectangle');
+            break;
+          case 'o':
+            e.preventDefault();
+            setCurrentTool('circle');
+            break;
+          case 't':
+            e.preventDefault();
+            setCurrentTool('text');
+            break;
+          case 'l':
+            e.preventDefault();
+            setCurrentTool('line');
+            break;
+          case 'f':
+            e.preventDefault();
+            setCurrentTool('frame');
+            break;
+          case 'c':
+            // Only switch to comment if not trying to copy
+            if (!e.metaKey && !e.ctrlKey) {
+              e.preventDefault();
+              setCurrentTool('comment');
+            }
+            break;
+          case 's':
+            e.preventDefault();
+            setCurrentTool('star');
+            break;
+          case 'a':
+            e.preventDefault();
+            setCurrentTool('triangle');
+            break;
+          case 'q':
+            e.preventDefault();
+            setCurrentTool('lasso');
+            break;
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleExport]);
+  }, [handleExport, setCurrentTool]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden">
