@@ -156,8 +156,8 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
         setShowLayers((prev) => !prev);
       }
 
-      // Toggle properties panel
-      if (e.key === 'p' && (e.metaKey || e.ctrlKey)) {
+      // Toggle properties panel (Cmd/Ctrl + Shift + P)
+      if (e.key === 'p' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
         e.preventDefault();
         setShowProperties((prev) => !prev);
       }
@@ -198,6 +198,10 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
           case 'f':
             e.preventDefault();
             setCurrentTool({ type: 'frame' });
+            break;
+          case 'p':
+            e.preventDefault();
+            setCurrentTool({ type: 'pen' });
             break;
           case 'c':
             // Only switch to comment if not trying to copy

@@ -1,6 +1,6 @@
 // Canvas Types for CollabCanvas
 
-export type ShapeType = 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'image' | 'frame';
+export type ShapeType = 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'image' | 'frame' | 'path';
 
 export interface Point {
   x: number;
@@ -113,6 +113,21 @@ export interface ImageShape extends BaseShape {
   src: string;
 }
 
+// Bezier path point for vector editing
+export interface PathPoint {
+  x: number;
+  y: number;
+  handleIn?: { x: number; y: number };  // Control point for incoming curve
+  handleOut?: { x: number; y: number }; // Control point for outgoing curve
+  type: 'corner' | 'smooth' | 'symmetric';
+}
+
+export interface PathShape extends BaseShape {
+  type: 'path';
+  points: PathPoint[];
+  closed: boolean;
+}
+
 // Auto-layout types (needed before Frame)
 export interface AutoLayoutConfig {
   direction: 'horizontal' | 'vertical';
@@ -136,6 +151,7 @@ export type CanvasShape =
   | TriangleShape
   | StarShape
   | ImageShape
+  | PathShape
   | Frame;
 
 export interface ShapeGroup {
@@ -204,7 +220,7 @@ export interface SelectionState {
 }
 
 export interface CanvasTool {
-  type: 'select' | 'lasso' | 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'pan' | 'hand' | 'frame' | 'comment';
+  type: 'select' | 'lasso' | 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'pan' | 'hand' | 'frame' | 'comment' | 'pen';
 }
 
 export interface SnapGuide {

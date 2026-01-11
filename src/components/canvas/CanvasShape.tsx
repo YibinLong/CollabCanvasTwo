@@ -15,7 +15,7 @@ import {
   Path,
 } from 'react-konva';
 import Konva from 'konva';
-import type { CanvasShape as CanvasShapeType, Frame, ImageShape } from '@/types/canvas';
+import type { CanvasShape as CanvasShapeType, Frame, ImageShape, PathShape } from '@/types/canvas';
 
 interface CanvasShapeProps {
   shape: CanvasShapeType;
@@ -281,7 +281,49 @@ const CanvasShapeComponent: React.FC<CanvasShapeProps> = ({
           />
         );
 
-      case 'frame':
+      case 'path': {
+        // Vector path with bezier curves
+        const pathShape = shape as unknown as PathShape;
+        const pathPoints = pathShape.points || [];
+
+        // Convert path points to SVG path data string
+        let pathData = '';
+        if (pathPoints.length > 0) {
+          pathData = `M ${pathPoints[0].x} ${pathPoints[0].y}`;
+          for (let i = 1; i < pathPoints.length; i++) {
+            const prev = pathPoints[i - 1];
+            const curr = pathPoints[i];
+
+            if (prev.handleOut && curr.handleIn) {
+              // Cubic bezier curve
+              pathData += ` C ${prev.handleOut.x} ${prev.handleOut.y}, ${curr.handleIn.x} ${curr.handleIn.y}, ${curr.x} ${curr.y}`;
+            } else if (prev.handleOut) {
+              // Quadratic bezier from handleOut
+              pathData += ` Q ${prev.handleOut.x} ${prev.handleOut.y}, ${curr.x} ${curr.y}`;
+            } else if (curr.handleIn) {
+              // Quadratic bezier from handleIn
+              pathData += ` Q ${curr.handleIn.x} ${curr.handleIn.y}, ${curr.x} ${curr.y}`;
+            } else {
+              // Straight line
+              pathData += ` L ${curr.x} ${curr.y}`;
+            }
+          }
+          if (pathShape.closed && pathPoints.length > 2) {
+            pathData += ' Z';
+          }
+        }
+
+        return (
+          <Path
+            {...commonProps}
+            data={pathData}
+            width={shape.width}
+            height={shape.height}
+          />
+        );
+      }
+
+      case 'frame': {
         // Frame is a container with optional auto-layout
         const frameShape = shape as unknown as Frame;
         return (
@@ -321,6 +363,7 @@ const CanvasShapeComponent: React.FC<CanvasShapeProps> = ({
             />
           </Group>
         );
+      }
 
       default:
         return null;

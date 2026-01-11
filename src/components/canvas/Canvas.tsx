@@ -2,7 +2,7 @@
 
 /* eslint-disable react-hooks/immutability, react-hooks/exhaustive-deps */
 import React, { useRef, useState, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
-import { Stage, Layer } from 'react-konva';
+import { Stage, Layer, Line, Circle as KonvaCircle } from 'react-konva';
 import Konva from 'konva';
 import { nanoid } from 'nanoid';
 import { useCanvasStore } from '@/store/canvasStore';
@@ -15,7 +15,7 @@ import { Grid } from './Grid';
 import { CommentMarker } from './CommentMarker';
 import { SmartGuides, getShapeBounds, calculateSnapGuides } from './SmartGuides';
 import { LassoSelection, isShapeInLasso } from './LassoSelection';
-import type { CanvasShape as CanvasShapeType, SnapGuide } from '@/types/canvas';
+import type { CanvasShape as CanvasShapeType, SnapGuide, PathPoint, PathShape } from '@/types/canvas';
 
 interface CanvasProps {
   width: number;
@@ -59,6 +59,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
   const [activeGuides, setActiveGuides] = useState<SnapGuide[]>([]);
   const [lassoPoints, setLassoPoints] = useState<number[]>([]);
   const [isLassoDrawing, setIsLassoDrawing] = useState(false);
+  const [penPoints, setPenPoints] = useState<PathPoint[]>([]);
+  const [isPenDrawing, setIsPenDrawing] = useState(false);
 
   const {
     shapes,
@@ -293,6 +295,34 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
         return;
       }
 
+      // Handle pen tool - add points on click
+      if (currentTool.type === 'pen') {
+        const newPoint: PathPoint = {
+          x: snappedPos.x,
+          y: snappedPos.y,
+          type: 'corner',
+        };
+
+        // If clicking near the first point and we have at least 3 points, close the path
+        if (penPoints.length >= 3) {
+          const firstPoint = penPoints[0];
+          const distance = Math.sqrt(
+            Math.pow(snappedPos.x - firstPoint.x, 2) +
+            Math.pow(snappedPos.y - firstPoint.y, 2)
+          );
+
+          if (distance < 15) {
+            // Close the path and create the shape
+            finalizePenPath(true);
+            return;
+          }
+        }
+
+        setPenPoints((prev) => [...prev, newPoint]);
+        setIsPenDrawing(true);
+        return;
+      }
+
       // Handle shape creation tools
       if (['rectangle', 'circle', 'triangle', 'star', 'line', 'text', 'frame'].includes(currentTool.type)) {
         setIsDrawing(true);
@@ -302,7 +332,65 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
         setTempShape(defaultShape);
       }
     },
-    [currentTool, getPointerPosition, snapPosition, clearSelection, setSelectionBox, isAddingComment, currentUser, addComment, setIsAddingComment, setActiveCommentId]
+    [currentTool, getPointerPosition, snapPosition, clearSelection, setSelectionBox, isAddingComment, currentUser, addComment, setIsAddingComment, setActiveCommentId, penPoints]
+  );
+
+  // Finalize pen path into a shape
+  const finalizePenPath = useCallback(
+    (closed: boolean) => {
+      if (penPoints.length < 2) {
+        setPenPoints([]);
+        setIsPenDrawing(false);
+        return;
+      }
+
+      // Calculate bounding box
+      const xs = penPoints.map((p) => p.x);
+      const ys = penPoints.map((p) => p.y);
+      const minX = Math.min(...xs);
+      const minY = Math.min(...ys);
+      const maxX = Math.max(...xs);
+      const maxY = Math.max(...ys);
+
+      // Normalize points relative to bounding box
+      const normalizedPoints: PathPoint[] = penPoints.map((p) => ({
+        ...p,
+        x: p.x - minX,
+        y: p.y - minY,
+      }));
+
+      const pathShape: PathShape = {
+        id: nanoid(),
+        type: 'path',
+        x: minX,
+        y: minY,
+        width: maxX - minX || 10,
+        height: maxY - minY || 10,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        fill: closed ? '#3B82F6' : 'transparent',
+        stroke: '#1E40AF',
+        strokeWidth: 2,
+        opacity: 1,
+        visible: true,
+        locked: false,
+        name: 'Path',
+        zIndex: Object.keys(shapes).length,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        createdBy: currentUser?.id || '',
+        lastEditedBy: currentUser?.id || '',
+        points: normalizedPoints,
+        closed,
+      };
+
+      addShape(pathShape);
+      setSelectedIds([pathShape.id]);
+      setPenPoints([]);
+      setIsPenDrawing(false);
+    },
+    [penPoints, shapes, currentUser, addShape, setSelectedIds]
   );
 
   // Handle mouse up
@@ -541,9 +629,21 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
         return;
       }
 
-      // Escape to deselect
+      // Escape to deselect or cancel pen drawing
       if (e.key === 'Escape') {
+        if (isPenDrawing && penPoints.length > 0) {
+          setPenPoints([]);
+          setIsPenDrawing(false);
+          return;
+        }
         clearSelection();
+        return;
+      }
+
+      // Enter to finalize pen path (open path)
+      if (e.key === 'Enter' && isPenDrawing && penPoints.length >= 2) {
+        e.preventDefault();
+        finalizePenPath(false);
         return;
       }
 
@@ -667,6 +767,9 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
     shapes,
     groups,
     updateShape,
+    isPenDrawing,
+    penPoints,
+    finalizePenPath,
   ]);
 
   // Determine cursor style
@@ -680,6 +783,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
         return 'default';
       case 'lasso':
         return isLassoDrawing ? 'crosshair' : 'default';
+      case 'pen':
+        return 'crosshair';
       case 'comment':
         return 'crosshair';
       default:
@@ -758,6 +863,32 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
           {/* Lasso selection */}
           {lassoPoints.length >= 4 && (
             <LassoSelection points={lassoPoints} isDrawing={isLassoDrawing} />
+          )}
+
+          {/* Pen tool path preview */}
+          {penPoints.length >= 1 && (
+            <>
+              {/* Draw path lines */}
+              <Line
+                points={penPoints.flatMap((p) => [p.x, p.y])}
+                stroke="#3B82F6"
+                strokeWidth={2}
+                lineCap="round"
+                lineJoin="round"
+              />
+              {/* Draw control points */}
+              {penPoints.map((point, index) => (
+                <KonvaCircle
+                  key={index}
+                  x={point.x}
+                  y={point.y}
+                  radius={4}
+                  fill={index === 0 && penPoints.length >= 3 ? '#10B981' : '#3B82F6'}
+                  stroke="#1E40AF"
+                  strokeWidth={1}
+                />
+              ))}
+            </>
           )}
 
           {/* Smart guides */}

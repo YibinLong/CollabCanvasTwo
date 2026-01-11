@@ -129,6 +129,12 @@ export const Toolbar: React.FC = () => {
         case 'o':
           setCurrentTool({ type: 'circle' });
           break;
+        case 'a':
+          setCurrentTool({ type: 'triangle' });
+          break;
+        case 's':
+          if (!isMod) setCurrentTool({ type: 'star' });
+          break;
         case 'l':
           setCurrentTool({ type: 'line' });
           break;
@@ -137,6 +143,9 @@ export const Toolbar: React.FC = () => {
           break;
         case 'f':
           setCurrentTool({ type: 'frame' });
+          break;
+        case 'p':
+          if (!isMod) setCurrentTool({ type: 'pen' });
           break;
         case 'c':
           if (!isMod) setCurrentTool({ type: 'comment' });
@@ -200,6 +209,7 @@ export const Toolbar: React.FC = () => {
           tool="triangle"
           icon={<TriangleIcon />}
           label="Triangle"
+          shortcut="A"
           isActive={currentTool.type === 'triangle'}
           onClick={() => setCurrentTool({ type: 'triangle' })}
         />
@@ -207,6 +217,7 @@ export const Toolbar: React.FC = () => {
           tool="star"
           icon={<StarIcon />}
           label="Star"
+          shortcut="S"
           isActive={currentTool.type === 'star'}
           onClick={() => setCurrentTool({ type: 'star' })}
         />
@@ -237,6 +248,14 @@ export const Toolbar: React.FC = () => {
           shortcut="F"
           isActive={currentTool.type === 'frame'}
           onClick={() => setCurrentTool({ type: 'frame' })}
+        />
+        <ToolButton
+          tool="pen"
+          icon={<PenIcon />}
+          label="Pen"
+          shortcut="P"
+          isActive={currentTool.type === 'pen'}
+          onClick={() => setCurrentTool({ type: 'pen' })}
         />
         <ToolButton
           tool="comment"
@@ -403,5 +422,14 @@ const LassoIcon = () => (
     <path d="M3.34 14A6.8 6.8 0 0 1 2 10c0-4.42 4.48-8 10-8s10 3.58 10 8a7.19 7.19 0 0 1-.33 2" />
     <path d="M5 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
     <path d="M14.33 22h-.09a.35.35 0 0 1-.24-.32v-10a.34.34 0 0 1 .33-.34c.08 0 .15.03.21.08l7.34 6a.33.33 0 0 1-.21.59h-4.49l-2.57 3.85a.35.35 0 0 1-.28.14v0z" />
+  </svg>
+);
+
+const PenIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 19l7-7 3 3-7 7-3-3z" />
+    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+    <path d="M2 2l7.586 7.586" />
+    <circle cx="11" cy="11" r="2" />
   </svg>
 );
