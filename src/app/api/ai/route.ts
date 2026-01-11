@@ -166,6 +166,38 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'arrangeInColumn',
+      description: 'Arrange shapes in a vertical column',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: { type: 'array', items: { type: 'string' } },
+          x: { type: 'number' },
+          startY: { type: 'number' },
+          gap: { type: 'number' },
+        },
+        required: ['shapeIds'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'spaceEvenly',
+      description: 'Space selected shapes evenly between the first and last shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: { type: 'array', items: { type: 'string' } },
+          direction: { type: 'string', enum: ['horizontal', 'vertical'] },
+        },
+        required: ['shapeIds', 'direction'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'createLoginForm',
       description: 'Create a login form with username, password, and submit button',
       parameters: {

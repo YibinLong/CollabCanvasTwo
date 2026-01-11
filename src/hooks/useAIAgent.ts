@@ -131,6 +131,69 @@ export const useAIAgent = () => {
         return `Deleted "${shape.name}".`;
       }
 
+      case 'arrangeInColumn': {
+        const shapeIds = args.shapeIds as string[];
+        const gap = (args.gap as number) || 20;
+        const startY = (args.startY as number) || 100;
+        const x = args.x as number | undefined;
+
+        const shapesToArrange = shapeIds
+          .map((id) => findShapeByIdOrName(id))
+          .filter((s): s is CanvasShape => s !== undefined);
+
+        if (shapesToArrange.length < 2) return 'Need at least 2 shapes to arrange.';
+
+        let currentY = startY;
+        const targetX = x ?? shapesToArrange[0].x;
+
+        shapesToArrange.forEach((shape) => {
+          updateShape(shape.id, { x: targetX, y: currentY });
+          currentY += shape.height * shape.scaleY + gap;
+        });
+
+        return `Arranged ${shapesToArrange.length} shapes in a column.`;
+      }
+
+      case 'spaceEvenly': {
+        const shapeIds = args.shapeIds as string[];
+        const direction = args.direction as string;
+        const shapesToSpace = shapeIds
+          .map((id) => findShapeByIdOrName(id))
+          .filter((s): s is CanvasShape => s !== undefined);
+
+        if (shapesToSpace.length < 3) return 'Need at least 3 shapes to space evenly.';
+
+        if (direction === 'horizontal') {
+          shapesToSpace.sort((a, b) => a.x - b.x);
+          const first = shapesToSpace[0];
+          const last = shapesToSpace[shapesToSpace.length - 1];
+          const totalWidth = shapesToSpace.reduce((sum, s) => sum + s.width * s.scaleX, 0);
+          const availableSpace = (last.x + last.width * last.scaleX) - first.x - totalWidth;
+          const spacing = availableSpace / (shapesToSpace.length - 1);
+
+          let currentX = first.x;
+          shapesToSpace.forEach((shape) => {
+            updateShape(shape.id, { x: currentX });
+            currentX += shape.width * shape.scaleX + spacing;
+          });
+        } else {
+          shapesToSpace.sort((a, b) => a.y - b.y);
+          const first = shapesToSpace[0];
+          const last = shapesToSpace[shapesToSpace.length - 1];
+          const totalHeight = shapesToSpace.reduce((sum, s) => sum + s.height * s.scaleY, 0);
+          const availableSpace = (last.y + last.height * last.scaleY) - first.y - totalHeight;
+          const spacing = availableSpace / (shapesToSpace.length - 1);
+
+          let currentY = first.y;
+          shapesToSpace.forEach((shape) => {
+            updateShape(shape.id, { y: currentY });
+            currentY += shape.height * shape.scaleY + spacing;
+          });
+        }
+
+        return `Spaced ${shapesToSpace.length} shapes evenly ${direction}ly.`;
+      }
+
       case 'arrangeInGrid': {
         const startX = (args.startX as number) || 100;
         const startY = (args.startY as number) || 100;
