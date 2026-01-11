@@ -239,28 +239,38 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
             )}
 
             {/* Connection status indicator */}
-            {connectionStatus !== 'connected' && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full z-10 flex items-center gap-2">
-                {connectionStatus === 'connecting' && (
-                  <>
-                    <span className="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span>
-                    Connecting...
-                  </>
-                )}
-                {connectionStatus === 'reconnecting' && (
-                  <>
-                    <span className="animate-pulse w-2 h-2 bg-orange-500 rounded-full"></span>
-                    Reconnecting...
-                  </>
-                )}
-                {connectionStatus === 'disconnected' && (
-                  <>
-                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                    Disconnected
-                  </>
-                )}
-              </div>
-            )}
+            <div className={`absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 text-sm rounded-full z-10 flex items-center gap-2 transition-all duration-300 ${
+              connectionStatus === 'connected'
+                ? 'bg-green-100 text-green-800'
+                : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+            }`}>
+              {connectionStatus === 'connected' && (
+                <>
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Connected
+                </>
+              )}
+              {connectionStatus === 'connecting' && (
+                <>
+                  <span className="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span>
+                  Connecting...
+                </>
+              )}
+              {connectionStatus === 'reconnecting' && (
+                <>
+                  <span className="animate-pulse w-2 h-2 bg-orange-500 rounded-full"></span>
+                  Reconnecting...
+                </>
+              )}
+              {connectionStatus === 'disconnected' && (
+                <>
+                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                  Disconnected
+                </>
+              )}
+            </div>
 
             <Canvas
               ref={canvasRef}
