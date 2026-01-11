@@ -173,50 +173,48 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
         switch (e.key.toLowerCase()) {
           case 'v':
             e.preventDefault();
-            setCurrentTool('select');
+            setCurrentTool({ type: 'select' });
             break;
           case 'h':
             e.preventDefault();
-            setCurrentTool('hand');
+            setCurrentTool({ type: 'hand' });
             break;
           case 'r':
             e.preventDefault();
-            setCurrentTool('rectangle');
+            setCurrentTool({ type: 'rectangle' });
             break;
           case 'o':
             e.preventDefault();
-            setCurrentTool('circle');
+            setCurrentTool({ type: 'circle' });
             break;
           case 't':
             e.preventDefault();
-            setCurrentTool('text');
+            setCurrentTool({ type: 'text' });
             break;
           case 'l':
             e.preventDefault();
-            setCurrentTool('line');
+            setCurrentTool({ type: 'line' });
             break;
           case 'f':
             e.preventDefault();
-            setCurrentTool('frame');
+            setCurrentTool({ type: 'frame' });
             break;
           case 'c':
             // Only switch to comment if not trying to copy
-            if (!e.metaKey && !e.ctrlKey) {
-              e.preventDefault();
-              setCurrentTool('comment');
-            }
+            e.preventDefault();
+            setCurrentTool({ type: 'comment' });
             break;
           case 's':
             e.preventDefault();
-            setCurrentTool('star');
+            setCurrentTool({ type: 'star' });
             break;
           case 'a':
             e.preventDefault();
-            setCurrentTool('triangle');
+            setCurrentTool({ type: 'triangle' });
             break;
           case 'q':
             e.preventDefault();
-            setCurrentTool('lasso');
+            setCurrentTool({ type: 'lasso' });
             break;
         }
       }
