@@ -618,6 +618,40 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'changeBlendMode',
+      description: 'Change the blend mode of a shape for visual effects',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape',
+          },
+          blendMode: {
+            type: 'string',
+            enum: ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'],
+            description: 'The blend mode to apply',
+          },
+        },
+        required: ['shapeId', 'blendMode'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'listShapes',
+      description: 'List all shapes currently on the canvas with their details',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
 ];
 
 export interface AIAgentConfig {
@@ -760,6 +794,10 @@ Always explain what you did after executing commands.`,
         return this.createButton(args);
       case 'createFrame':
         return this.createFrame(args);
+      case 'changeBlendMode':
+        return this.changeBlendMode(args);
+      case 'listShapes':
+        return this.listShapes();
       default:
         return `Unknown tool: ${name}`;
     }
@@ -1594,5 +1632,28 @@ Always explain what you did after executing commands.`,
 
     this.onAddShape(frame as unknown as CanvasShape);
     return `Created frame "${args.name}" at (${x}, ${y}) with size ${width}x${height}.`;
+  }
+
+  private changeBlendMode(args: { shapeId: string; blendMode: string }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+    this.onUpdateShape(shape.id, { blendMode: args.blendMode as CanvasShape['blendMode'] });
+    return `Changed blend mode of "${shape.name}" to ${args.blendMode}.`;
+  }
+
+  private listShapes(): string {
+    const shapeList = Object.values(this.shapes);
+    if (shapeList.length === 0) {
+      return 'The canvas is empty.';
+    }
+
+    const list = shapeList
+      .sort((a, b) => a.zIndex - b.zIndex)
+      .map((s) => `- ${s.name} (${s.type}): id="${s.id}", position=(${Math.round(s.x)}, ${Math.round(s.y)}), size=${Math.round(s.width)}x${Math.round(s.height)}, color=${s.fill}`)
+      .join('\n');
+
+    return `Canvas has ${shapeList.length} shapes:\n${list}`;
   }
 }
