@@ -8,6 +8,8 @@ import type {
   ShapeGroup,
   SnapGuide,
   CanvasVersion,
+  Frame,
+  AutoLayoutConfig,
 } from '@/types/canvas';
 
 interface CanvasStore {
@@ -103,6 +105,12 @@ interface CanvasStore {
   // Alignment
   alignShapes: (ids: string[], alignment: 'left' | 'right' | 'center' | 'top' | 'bottom' | 'middle') => void;
   distributeShapes: (ids: string[], direction: 'horizontal' | 'vertical') => void;
+
+  // Auto-layout (for frames)
+  setFrameAutoLayout: (frameId: string, config: AutoLayoutConfig | undefined) => void;
+  addChildToFrame: (frameId: string, childId: string) => void;
+  removeChildFromFrame: (frameId: string, childId: string) => void;
+  applyAutoLayout: (frameId: string) => void;
 
   // Canvas state
   setCanvasId: (id: string) => void;
@@ -676,6 +684,164 @@ export const useCanvasStore = create<CanvasStore>()(
             updatedAt: Date.now(),
           };
           currentY += shape.height * shape.scaleY + gap;
+        });
+      }
+
+      set({ shapes: newShapes });
+    },
+
+    // Auto-layout (for frames)
+    setFrameAutoLayout: (frameId, config) => {
+      const { shapes } = get();
+      const frame = shapes[frameId];
+      if (!frame || frame.type !== 'frame') return;
+
+      const updatedFrame = {
+        ...frame,
+        autoLayout: config,
+        updatedAt: Date.now(),
+      } as Frame;
+
+      set({ shapes: { ...shapes, [frameId]: updatedFrame } });
+
+      // Apply auto-layout if config is set
+      if (config) {
+        get().applyAutoLayout(frameId);
+      }
+    },
+
+    addChildToFrame: (frameId, childId) => {
+      const { shapes } = get();
+      const frame = shapes[frameId] as Frame | undefined;
+      if (!frame || frame.type !== 'frame') return;
+      if (frame.childIds.includes(childId)) return;
+
+      const updatedFrame = {
+        ...frame,
+        childIds: [...frame.childIds, childId],
+        updatedAt: Date.now(),
+      } as Frame;
+
+      set({ shapes: { ...shapes, [frameId]: updatedFrame } });
+
+      // Apply auto-layout if enabled
+      if (updatedFrame.autoLayout) {
+        get().applyAutoLayout(frameId);
+      }
+    },
+
+    removeChildFromFrame: (frameId, childId) => {
+      const { shapes } = get();
+      const frame = shapes[frameId] as Frame | undefined;
+      if (!frame || frame.type !== 'frame') return;
+
+      const updatedFrame = {
+        ...frame,
+        childIds: frame.childIds.filter((id) => id !== childId),
+        updatedAt: Date.now(),
+      } as Frame;
+
+      set({ shapes: { ...shapes, [frameId]: updatedFrame } });
+
+      // Apply auto-layout if enabled
+      if (updatedFrame.autoLayout) {
+        get().applyAutoLayout(frameId);
+      }
+    },
+
+    applyAutoLayout: (frameId) => {
+      const { shapes } = get();
+      const frame = shapes[frameId] as Frame | undefined;
+      if (!frame || frame.type !== 'frame' || !frame.autoLayout) return;
+
+      const config = frame.autoLayout;
+      const children = frame.childIds
+        .map((id) => shapes[id])
+        .filter((s): s is CanvasShape => s !== undefined);
+
+      if (children.length === 0) return;
+
+      const newShapes = { ...shapes };
+      const { padding, gap, direction, alignment } = config;
+
+      if (direction === 'horizontal') {
+        let currentX = frame.x + padding;
+        const containerHeight = frame.height - padding * 2;
+
+        children.forEach((child) => {
+          const childHeight = child.height * child.scaleY;
+          let newY = frame.y + padding;
+
+          switch (alignment) {
+            case 'center':
+              newY = frame.y + padding + (containerHeight - childHeight) / 2;
+              break;
+            case 'end':
+              newY = frame.y + frame.height - padding - childHeight;
+              break;
+            case 'stretch':
+              newY = frame.y + padding;
+              // Stretch height to fill
+              newShapes[child.id] = {
+                ...child,
+                x: currentX,
+                y: newY,
+                height: containerHeight / child.scaleY,
+                updatedAt: Date.now(),
+              };
+              currentX += child.width * child.scaleX + gap;
+              return;
+            default: // 'start'
+              newY = frame.y + padding;
+          }
+
+          newShapes[child.id] = {
+            ...child,
+            x: currentX,
+            y: newY,
+            updatedAt: Date.now(),
+          };
+          currentX += child.width * child.scaleX + gap;
+        });
+      } else {
+        // Vertical layout
+        let currentY = frame.y + padding;
+        const containerWidth = frame.width - padding * 2;
+
+        children.forEach((child) => {
+          const childWidth = child.width * child.scaleX;
+          let newX = frame.x + padding;
+
+          switch (alignment) {
+            case 'center':
+              newX = frame.x + padding + (containerWidth - childWidth) / 2;
+              break;
+            case 'end':
+              newX = frame.x + frame.width - padding - childWidth;
+              break;
+            case 'stretch':
+              newX = frame.x + padding;
+              // Stretch width to fill
+              newShapes[child.id] = {
+                ...child,
+                x: newX,
+                y: currentY,
+                width: containerWidth / child.scaleX,
+                updatedAt: Date.now(),
+              };
+              currentY += child.height * child.scaleY + gap;
+              return;
+            default: // 'start'
+              newX = frame.x + padding;
+          }
+
+          newShapes[child.id] = {
+            ...child,
+            x: newX,
+            y: currentY,
+            updatedAt: Date.now(),
+          };
+          currentY += child.height * child.scaleY + gap;
         });
       }
 
