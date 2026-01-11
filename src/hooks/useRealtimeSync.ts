@@ -36,6 +36,18 @@ interface RealtimeSyncOptions {
   userColor: string;
 }
 
+// Offline queue types
+interface QueuedOperation {
+  id: string;
+  type: 'shape_update' | 'shape_delete' | 'comment_update' | 'comment_delete' | 'version_save';
+  data: unknown;
+  timestamp: number;
+}
+
+// Offline queue management
+const offlineQueue: QueuedOperation[] = [];
+let isProcessingQueue = false;
+
 // Generate session ID outside component to maintain referential stability
 let sessionCounter = 0;
 const generateSessionId = (userId: string): string => {
@@ -85,10 +97,90 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
   const cursorUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastCursorUpdate = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Sync shapes to Firestore
+  // Process offline queue when reconnected
+  const processOfflineQueue = useCallback(async () => {
+    if (isProcessingQueue || offlineQueue.length === 0 || !canvasId) return;
+
+    isProcessingQueue = true;
+    setConnectionStatus('syncing');
+
+    while (offlineQueue.length > 0) {
+      const operation = offlineQueue.shift();
+      if (!operation) continue;
+
+      try {
+        switch (operation.type) {
+          case 'shape_update': {
+            const shape = operation.data as CanvasShape;
+            const shapeRef = doc(db, `canvases/${canvasId}/shapes`, shape.id);
+            await setDoc(shapeRef, { ...shape, updatedAt: Timestamp.now() });
+            break;
+          }
+          case 'shape_delete': {
+            const shapeId = operation.data as string;
+            const shapeRef = doc(db, `canvases/${canvasId}/shapes`, shapeId);
+            await deleteDoc(shapeRef);
+            break;
+          }
+          case 'comment_update': {
+            const comment = operation.data as Comment;
+            const commentRef = doc(db, `canvases/${canvasId}/comments`, comment.id);
+            await setDoc(commentRef, { ...comment, updatedAt: Timestamp.now() });
+            break;
+          }
+          case 'comment_delete': {
+            const commentId = operation.data as string;
+            const commentRef = doc(db, `canvases/${canvasId}/comments`, commentId);
+            await deleteDoc(commentRef);
+            break;
+          }
+          case 'version_save': {
+            const version = operation.data as CanvasVersion;
+            const versionRef = doc(db, `canvases/${canvasId}/versions`, version.id);
+            await setDoc(versionRef, { ...version, timestamp: Timestamp.fromMillis(version.timestamp) });
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Error processing offline queue operation:', error);
+        // Re-queue the operation
+        offlineQueue.unshift(operation);
+        break;
+      }
+    }
+
+    isProcessingQueue = false;
+    if (offlineQueue.length === 0) {
+      setConnectionStatus('connected');
+    }
+  }, [canvasId, setConnectionStatus]);
+
+  // Sync shapes to Firestore with offline support
   const syncShapeToFirestore = useCallback(
     async (shape: CanvasShape) => {
       if (!canvasId) return;
+
+      const { isConnected } = useUserStore.getState();
+
+      // If offline, queue the operation
+      if (!isConnected) {
+        const existingIndex = offlineQueue.findIndex(
+          (op) => op.type === 'shape_update' && (op.data as CanvasShape).id === shape.id
+        );
+        const operation: QueuedOperation = {
+          id: `${shape.id}-${Date.now()}`,
+          type: 'shape_update',
+          data: shape,
+          timestamp: Date.now(),
+        };
+
+        if (existingIndex >= 0) {
+          offlineQueue[existingIndex] = operation;
+        } else {
+          offlineQueue.push(operation);
+        }
+        return;
+      }
 
       try {
         const shapeRef = doc(db, `canvases/${canvasId}/shapes`, shape.id);
@@ -98,6 +190,13 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
         });
       } catch (error) {
         console.error('Error syncing shape to Firestore:', error);
+        // Queue for retry
+        offlineQueue.push({
+          id: `${shape.id}-${Date.now()}`,
+          type: 'shape_update',
+          data: shape,
+          timestamp: Date.now(),
+        });
       }
     },
     [canvasId]
@@ -290,6 +389,9 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
         setIsConnected(true);
         setConnectionStatus('connected');
 
+        // Process any queued operations from offline mode
+        processOfflineQueue();
+
         // Set user presence
         set(presenceRef, {
           odId,
@@ -314,7 +416,7 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
       remove(presenceRef);
       remove(ref(rtdb, `canvases/${canvasId}/cursors/${odId}`));
     };
-  }, [canvasId, userId, odId, userName, userColor, setIsConnected, setConnectionStatus]);
+  }, [canvasId, userId, odId, userName, userColor, setIsConnected, setConnectionStatus, processOfflineQueue]);
 
   // Listen to cursor updates from Realtime Database
   useEffect(() => {
@@ -586,6 +688,8 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     syncCommentDeletion,
     syncVersionToFirestore,
     syncVersionDeletion,
+    processOfflineQueue,
+    pendingOperations: offlineQueue.length,
     isInitialized: isInitialized.current,
   };
 };

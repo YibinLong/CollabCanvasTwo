@@ -13,7 +13,7 @@ interface UserStore {
 
   // Connection status
   isConnected: boolean;
-  connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting';
+  connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'reconnecting' | 'syncing';
 
   // Actions
   setCurrentUser: (user: User | null) => void;
@@ -30,7 +30,7 @@ interface UserStore {
   removeCursor: (userId: string) => void;
 
   setIsConnected: (isConnected: boolean) => void;
-  setConnectionStatus: (status: 'connected' | 'connecting' | 'disconnected' | 'reconnecting') => void;
+  setConnectionStatus: (status: 'connected' | 'connecting' | 'disconnected' | 'reconnecting' | 'syncing') => void;
 
   logout: () => void;
 }

@@ -18,12 +18,16 @@ export const PresencePanel: React.FC = () => {
             className={`w-2 h-2 rounded-full ${
               connectionStatus === 'connected'
                 ? 'bg-green-500'
-                : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
-                  ? 'bg-yellow-500 animate-pulse'
-                  : 'bg-red-500'
+                : connectionStatus === 'syncing'
+                  ? 'bg-blue-500 animate-pulse'
+                  : connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
+                    ? 'bg-yellow-500 animate-pulse'
+                    : 'bg-red-500'
             }`}
           />
-          <span className="text-xs text-gray-400 capitalize">{connectionStatus}</span>
+          <span className="text-xs text-gray-400 capitalize">
+            {connectionStatus === 'syncing' ? 'Syncing...' : connectionStatus}
+          </span>
         </div>
       </div>
 
