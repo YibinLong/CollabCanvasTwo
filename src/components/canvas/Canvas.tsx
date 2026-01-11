@@ -14,6 +14,7 @@ import { SelectionBox } from './SelectionBox';
 import { Grid } from './Grid';
 import { CommentMarker } from './CommentMarker';
 import { SmartGuides, getShapeBounds, calculateSnapGuides } from './SmartGuides';
+import { LassoSelection, isShapeInLasso } from './LassoSelection';
 import type { CanvasShape as CanvasShapeType, SnapGuide } from '@/types/canvas';
 
 interface CanvasProps {
@@ -56,6 +57,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
   const [tempShape, setTempShape] = useState<CanvasShapeType | null>(null);
   const [activeGuides, setActiveGuides] = useState<SnapGuide[]>([]);
+  const [lassoPoints, setLassoPoints] = useState<number[]>([]);
+  const [isLassoDrawing, setIsLassoDrawing] = useState(false);
 
   const {
     shapes,
@@ -211,6 +214,11 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
           height: Math.abs(snappedPos.y - selectionBox.y),
         });
       }
+
+      // Handle lasso selection
+      if (isLassoDrawing && currentTool.type === 'lasso') {
+        setLassoPoints((prev) => [...prev, pos.x, pos.y]);
+      }
     },
     [
       getPointerPosition,
@@ -222,6 +230,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
       selectionBox,
       snapPosition,
       setSelectionBox,
+      isLassoDrawing,
     ]
   );
 
@@ -268,6 +277,18 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
             width: 0,
             height: 0,
           });
+        }
+        return;
+      }
+
+      // Handle lasso selection tool
+      if (currentTool.type === 'lasso') {
+        if (clickedOnEmpty) {
+          clearSelection();
+          setActiveCommentId(null);
+          // Start lasso selection
+          setIsLassoDrawing(true);
+          setLassoPoints([pos.x, pos.y]);
         }
         return;
       }
@@ -321,7 +342,29 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
       setSelectedIds(selectedShapeIds);
     }
     setSelectionBox(null);
-  }, [isDrawing, tempShape, selectionBox, shapes, addShape, setSelectedIds, setSelectionBox]);
+
+    // Finalize lasso selection
+    if (isLassoDrawing && lassoPoints.length >= 6) {
+      // Find shapes within lasso path
+      const selectedShapeIds = Object.values(shapes)
+        .filter((shape) =>
+          isShapeInLasso(
+            shape.x,
+            shape.y,
+            shape.width,
+            shape.height,
+            shape.scaleX,
+            shape.scaleY,
+            lassoPoints
+          )
+        )
+        .map((shape) => shape.id);
+
+      setSelectedIds(selectedShapeIds);
+    }
+    setIsLassoDrawing(false);
+    setLassoPoints([]);
+  }, [isDrawing, tempShape, selectionBox, shapes, addShape, setSelectedIds, setSelectionBox, isLassoDrawing, lassoPoints]);
 
   // Handle stage drag for panning
   const handleDragMove = useCallback(
@@ -337,7 +380,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
   // Handle shape selection
   const handleShapeSelect = useCallback(
     (shapeId: string, e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      if (currentTool.type !== 'select') return;
+      if (currentTool.type !== 'select' && currentTool.type !== 'lasso') return;
 
       e.cancelBubble = true;
 
@@ -635,6 +678,8 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
         return isDraggingStage ? 'grabbing' : 'grab';
       case 'select':
         return 'default';
+      case 'lasso':
+        return isLassoDrawing ? 'crosshair' : 'default';
       case 'comment':
         return 'crosshair';
       default:
@@ -708,6 +753,11 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
               width={selectionBox.width}
               height={selectionBox.height}
             />
+          )}
+
+          {/* Lasso selection */}
+          {lassoPoints.length >= 4 && (
+            <LassoSelection points={lassoPoints} isDrawing={isLassoDrawing} />
           )}
 
           {/* Smart guides */}
