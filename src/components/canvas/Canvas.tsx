@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { Stage, Layer } from 'react-konva';
 import Konva from 'konva';
 import { nanoid } from 'nanoid';
@@ -18,12 +18,35 @@ interface CanvasProps {
   onCursorMove?: (x: number, y: number) => void;
 }
 
+export interface CanvasRef {
+  exportToPNG: () => string | null;
+  exportToSVG: () => string | null;
+  getStage: () => Konva.Stage | null;
+}
+
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 5;
 const SCALE_FACTOR = 1.1;
 
-export const Canvas: React.FC<CanvasProps> = ({ width, height, onCursorMove }) => {
+export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCursorMove }, ref) => {
   const stageRef = useRef<Konva.Stage>(null);
+
+  // Expose methods for export
+  useImperativeHandle(ref, () => ({
+    exportToPNG: () => {
+      const stage = stageRef.current;
+      if (!stage) return null;
+      return stage.toDataURL({ pixelRatio: 2 });
+    },
+    exportToSVG: () => {
+      // Konva doesn't have native SVG export, but we can convert to data URL
+      const stage = stageRef.current;
+      if (!stage) return null;
+      // For SVG, we'd need a more complex approach - return PNG for now
+      return stage.toDataURL({ pixelRatio: 2 });
+    },
+    getStage: () => stageRef.current,
+  }));
   const [isDraggingStage, setIsDraggingStage] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
@@ -49,6 +72,21 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height, onCursorMove }) =
     addShape,
     updateShape,
     deleteShapes,
+    duplicateShapes,
+    copyShapes,
+    cutShapes,
+    pasteShapes,
+    hasClipboard,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    selectAll,
+    bringToFront,
+    sendToBack,
+    groupShapes,
+    ungroupShapes,
+    groups,
   } = useCanvasStore();
 
   const { currentUser, cursors } = useUserStore();
@@ -362,21 +400,147 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height, onCursorMove }) =
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const isMod = e.metaKey || e.ctrlKey;
+
       // Delete selected shapes
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.length > 0) {
         e.preventDefault();
         deleteShapes(selectedIds);
+        return;
       }
 
       // Escape to deselect
       if (e.key === 'Escape') {
         clearSelection();
+        return;
+      }
+
+      // Copy (Cmd/Ctrl + C)
+      if (isMod && e.key === 'c' && selectedIds.length > 0) {
+        e.preventDefault();
+        copyShapes(selectedIds);
+        return;
+      }
+
+      // Cut (Cmd/Ctrl + X)
+      if (isMod && e.key === 'x' && selectedIds.length > 0) {
+        e.preventDefault();
+        cutShapes(selectedIds);
+        return;
+      }
+
+      // Paste (Cmd/Ctrl + V)
+      if (isMod && e.key === 'v' && hasClipboard()) {
+        e.preventDefault();
+        pasteShapes();
+        return;
+      }
+
+      // Duplicate (Cmd/Ctrl + D)
+      if (isMod && e.key === 'd' && selectedIds.length > 0) {
+        e.preventDefault();
+        duplicateShapes(selectedIds);
+        return;
+      }
+
+      // Undo (Cmd/Ctrl + Z)
+      if (isMod && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo()) undo();
+        return;
+      }
+
+      // Redo (Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y)
+      if ((isMod && e.shiftKey && e.key === 'z') || (isMod && e.key === 'y')) {
+        e.preventDefault();
+        if (canRedo()) redo();
+        return;
+      }
+
+      // Select All (Cmd/Ctrl + A)
+      if (isMod && e.key === 'a') {
+        e.preventDefault();
+        selectAll();
+        return;
+      }
+
+      // Bring to Front (Cmd/Ctrl + ])
+      if (isMod && e.key === ']' && selectedIds.length > 0) {
+        e.preventDefault();
+        bringToFront(selectedIds);
+        return;
+      }
+
+      // Send to Back (Cmd/Ctrl + [)
+      if (isMod && e.key === '[' && selectedIds.length > 0) {
+        e.preventDefault();
+        sendToBack(selectedIds);
+        return;
+      }
+
+      // Group (Cmd/Ctrl + G)
+      if (isMod && e.key === 'g' && !e.shiftKey && selectedIds.length >= 2) {
+        e.preventDefault();
+        groupShapes(selectedIds);
+        return;
+      }
+
+      // Ungroup (Cmd/Ctrl + Shift + G)
+      if (isMod && e.shiftKey && e.key === 'g') {
+        e.preventDefault();
+        const shape = selectedIds.length === 1 ? shapes[selectedIds[0]] : null;
+        if (shape?.groupId && groups[shape.groupId]) {
+          ungroupShapes(shape.groupId);
+        }
+        return;
+      }
+
+      // Arrow key nudging
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selectedIds.length > 0) {
+        e.preventDefault();
+        const nudge = e.shiftKey ? 10 : 1;
+        const dx = e.key === 'ArrowLeft' ? -nudge : e.key === 'ArrowRight' ? nudge : 0;
+        const dy = e.key === 'ArrowUp' ? -nudge : e.key === 'ArrowDown' ? nudge : 0;
+
+        selectedIds.forEach((id) => {
+          const shape = shapes[id];
+          if (shape) {
+            updateShape(id, { x: shape.x + dx, y: shape.y + dy });
+          }
+        });
+        return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIds, deleteShapes, clearSelection]);
+  }, [
+    selectedIds,
+    deleteShapes,
+    clearSelection,
+    copyShapes,
+    cutShapes,
+    pasteShapes,
+    hasClipboard,
+    duplicateShapes,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    selectAll,
+    bringToFront,
+    sendToBack,
+    groupShapes,
+    ungroupShapes,
+    shapes,
+    groups,
+    updateShape,
+  ]);
 
   // Determine cursor style
   const getCursorStyle = () => {
@@ -469,4 +633,6 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height, onCursorMove }) =
       </Stage>
     </div>
   );
-};
+});
+
+Canvas.displayName = 'Canvas';

@@ -7,6 +7,7 @@ import type {
   HistoryEntry,
   ShapeGroup,
   SnapGuide,
+  CanvasVersion,
 } from '@/types/canvas';
 
 interface CanvasStore {
@@ -36,6 +37,13 @@ interface CanvasStore {
   history: HistoryEntry[];
   historyIndex: number;
 
+  // Clipboard
+  clipboard: CanvasShape[];
+
+  // Version history
+  versions: CanvasVersion[];
+  maxVersions: number;
+
   // Canvas metadata
   canvasId: string;
   canvasName: string;
@@ -43,9 +51,12 @@ interface CanvasStore {
   // Actions
   setShapes: (shapes: Record<string, CanvasShape>) => void;
   addShape: (shape: CanvasShape) => void;
+  addShapeWithoutHistory: (shape: CanvasShape) => void;
   updateShape: (id: string, updates: Partial<CanvasShape>) => void;
+  updateShapeWithoutHistory: (id: string, updates: Partial<CanvasShape>) => void;
   deleteShape: (id: string) => void;
   deleteShapes: (ids: string[]) => void;
+  clearShapes: () => void;
 
   setViewport: (x: number, y: number, scale: number) => void;
   setScale: (scale: number) => void;
@@ -72,6 +83,12 @@ interface CanvasStore {
   canUndo: () => boolean;
   canRedo: () => boolean;
 
+  // Clipboard actions
+  copyShapes: (ids: string[]) => void;
+  cutShapes: (ids: string[]) => void;
+  pasteShapes: (offsetX?: number, offsetY?: number) => string[];
+  hasClipboard: () => boolean;
+
   // Group actions
   groupShapes: (ids: string[]) => string | null;
   ungroupShapes: (groupId: string) => void;
@@ -91,6 +108,12 @@ interface CanvasStore {
   setCanvasId: (id: string) => void;
   setCanvasName: (name: string) => void;
   resetCanvas: () => void;
+
+  // Version history actions
+  saveVersion: (name: string, userId: string, userName: string) => string;
+  restoreVersion: (versionId: string) => boolean;
+  deleteVersion: (versionId: string) => void;
+  getVersions: () => CanvasVersion[];
 }
 
 const MAX_HISTORY = 50;
@@ -112,6 +135,9 @@ export const useCanvasStore = create<CanvasStore>()(
     snapGuides: [],
     history: [],
     historyIndex: -1,
+    clipboard: [],
+    versions: [],
+    maxVersions: 20,
     canvasId: '',
     canvasName: 'Untitled Canvas',
 
@@ -125,6 +151,11 @@ export const useCanvasStore = create<CanvasStore>()(
         shapes: [shape],
         userId: shape.createdBy,
       });
+      set({ shapes: { ...shapes, [shape.id]: shape } });
+    },
+
+    addShapeWithoutHistory: (shape) => {
+      const { shapes } = get();
       set({ shapes: { ...shapes, [shape.id]: shape } });
     },
 
@@ -146,6 +177,20 @@ export const useCanvasStore = create<CanvasStore>()(
         previousShapes: [previousShape],
         userId: updatedShape.lastEditedBy,
       });
+
+      set({ shapes: { ...shapes, [id]: updatedShape } });
+    },
+
+    updateShapeWithoutHistory: (id, updates) => {
+      const { shapes } = get();
+      const shape = shapes[id];
+      if (!shape) return;
+
+      const updatedShape = {
+        ...shape,
+        ...updates,
+        updatedAt: Date.now(),
+      } as CanvasShape;
 
       set({ shapes: { ...shapes, [id]: updatedShape } });
     },
@@ -188,6 +233,25 @@ export const useCanvasStore = create<CanvasStore>()(
       set({
         shapes: newShapes,
         selectedIds: selectedIds.filter((id) => !ids.includes(id)),
+      });
+    },
+
+    clearShapes: () => {
+      const { shapes, pushToHistory } = get();
+      const allShapes = Object.values(shapes);
+
+      if (allShapes.length === 0) return;
+
+      pushToHistory({
+        action: 'delete',
+        shapes: allShapes,
+        userId: allShapes[0]?.lastEditedBy || '',
+      });
+
+      set({
+        shapes: {},
+        selectedIds: [],
+        groups: {},
       });
     },
 
@@ -299,6 +363,68 @@ export const useCanvasStore = create<CanvasStore>()(
 
     canUndo: () => get().historyIndex >= 0,
     canRedo: () => get().historyIndex < get().history.length - 1,
+
+    // Clipboard actions
+    copyShapes: (ids) => {
+      const { shapes } = get();
+      const shapesToCopy = ids.map((id) => shapes[id]).filter(Boolean) as CanvasShape[];
+      set({ clipboard: shapesToCopy });
+    },
+
+    cutShapes: (ids) => {
+      const { shapes, selectedIds, pushToHistory } = get();
+      const shapesToCut = ids.map((id) => shapes[id]).filter(Boolean) as CanvasShape[];
+
+      if (shapesToCut.length === 0) return;
+
+      // Save to clipboard
+      set({ clipboard: shapesToCut });
+
+      // Delete shapes
+      pushToHistory({
+        action: 'delete',
+        shapes: shapesToCut,
+        userId: shapesToCut[0]?.lastEditedBy || '',
+      });
+
+      const newShapes = { ...shapes };
+      ids.forEach((id) => delete newShapes[id]);
+
+      set({
+        shapes: newShapes,
+        selectedIds: selectedIds.filter((id) => !ids.includes(id)),
+      });
+    },
+
+    pasteShapes: (offsetX = 20, offsetY = 20) => {
+      const { clipboard, shapes } = get();
+      if (clipboard.length === 0) return [];
+
+      const newIds: string[] = [];
+      const newShapes = { ...shapes };
+      const timestamp = Date.now();
+
+      clipboard.forEach((shape) => {
+        const newId = nanoid();
+        newIds.push(newId);
+
+        newShapes[newId] = {
+          ...shape,
+          id: newId,
+          x: shape.x + offsetX,
+          y: shape.y + offsetY,
+          name: `${shape.name}`,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          groupId: undefined,
+        };
+      });
+
+      set({ shapes: newShapes, selectedIds: newIds });
+      return newIds;
+    },
+
+    hasClipboard: () => get().clipboard.length > 0,
 
     // Group actions
     groupShapes: (ids) => {
@@ -567,5 +693,52 @@ export const useCanvasStore = create<CanvasStore>()(
         history: [],
         historyIndex: -1,
       }),
+
+    // Version history actions
+    saveVersion: (name, userId, userName) => {
+      const { shapes, groups, versions, maxVersions } = get();
+      const versionId = nanoid();
+
+      const newVersion: CanvasVersion = {
+        id: versionId,
+        name: name || `Version ${versions.length + 1}`,
+        shapes: JSON.parse(JSON.stringify(shapes)), // Deep clone
+        groups: JSON.parse(JSON.stringify(groups)),
+        timestamp: Date.now(),
+        createdBy: userId,
+        createdByName: userName,
+      };
+
+      // Limit versions
+      const updatedVersions = [newVersion, ...versions].slice(0, maxVersions);
+      set({ versions: updatedVersions });
+
+      return versionId;
+    },
+
+    restoreVersion: (versionId) => {
+      const { versions } = get();
+      const version = versions.find((v) => v.id === versionId);
+
+      if (!version) return false;
+
+      set({
+        shapes: JSON.parse(JSON.stringify(version.shapes)),
+        groups: JSON.parse(JSON.stringify(version.groups)),
+        selectedIds: [],
+        selectionBox: null,
+        history: [],
+        historyIndex: -1,
+      });
+
+      return true;
+    },
+
+    deleteVersion: (versionId) => {
+      const { versions } = get();
+      set({ versions: versions.filter((v) => v.id !== versionId) });
+    },
+
+    getVersions: () => get().versions,
   }))
 );
