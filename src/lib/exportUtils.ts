@@ -1,4 +1,4 @@
-import type { CanvasShape, TextShape } from '@/types/canvas';
+import type { CanvasShape, TextShape, Frame, ImageShape } from '@/types/canvas';
 
 /**
  * Converts canvas shapes to SVG format
@@ -57,7 +57,8 @@ export function shapesToSVG(
 
 function shapeToSVGElement(shape: CanvasShape): string {
   const transform = buildTransform(shape);
-  const baseAttrs = `opacity="${shape.opacity}"${transform ? ` transform="${transform}"` : ''}`;
+  const blendMode = shape.blendMode && shape.blendMode !== 'normal' ? ` style="mix-blend-mode: ${shape.blendMode}"` : '';
+  const baseAttrs = `opacity="${shape.opacity}"${transform ? ` transform="${transform}"` : ''}${blendMode}`;
 
   switch (shape.type) {
     case 'rectangle':
@@ -72,6 +73,10 @@ function shapeToSVGElement(shape: CanvasShape): string {
       return renderLine(shape, baseAttrs);
     case 'text':
       return renderText(shape as TextShape, baseAttrs);
+    case 'frame':
+      return renderFrame(shape as Frame, baseAttrs);
+    case 'image':
+      return renderImage(shape as ImageShape, baseAttrs);
     default:
       return '';
   }
@@ -187,6 +192,30 @@ function escapeXml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+function renderFrame(shape: Frame, baseAttrs: string): string {
+  const width = shape.width * shape.scaleX;
+  const height = shape.height * shape.scaleY;
+
+  // Frame is rendered as a rectangle with a label
+  const rect = `<rect x="${shape.x}" y="${shape.y}" width="${width}" height="${height}" fill="${shape.fill}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" ${baseAttrs}/>`;
+
+  // Add frame name as a label above the frame
+  const label = `<text x="${shape.x}" y="${shape.y - 8}" font-family="Arial" font-size="12" fill="#6B7280">${escapeXml(shape.name)}</text>`;
+
+  return `<g class="frame">
+    ${label}
+    ${rect}
+  </g>`;
+}
+
+function renderImage(shape: ImageShape, baseAttrs: string): string {
+  const width = shape.width * shape.scaleX;
+  const height = shape.height * shape.scaleY;
+
+  // Render image with xlink:href for the data URL
+  return `<image x="${shape.x}" y="${shape.y}" width="${width}" height="${height}" href="${shape.src}" preserveAspectRatio="xMidYMid slice" ${baseAttrs}/>`;
 }
 
 /**
