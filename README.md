@@ -47,13 +47,13 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 - Comment markers on canvas with hover preview
 - Filter by resolved/unresolved status
 
-### AI Canvas Agent (24+ Commands)
+### AI Canvas Agent (30+ Commands)
 Natural language commands to create and modify shapes:
 - **Creation**: Create shapes, text, buttons, frames
 - **Manipulation**: Move, resize, rotate, scale, duplicate
 - **Styling**: Change colors, opacity, stroke, blend mode
 - **Layout**: Arrange in grid, row, column; align; distribute; space evenly
-- **Complex UI**: Create login forms, navigation bars, cards
+- **Complex UI**: Create login forms, signup forms, navigation bars, profile cards, hero sections, search bars, footers
 
 ### Export Options
 - **PNG**: High-quality raster export
@@ -291,9 +291,19 @@ CollabCanvas uses a **Last-Write-Wins (LWW)** strategy for conflict resolution, 
 | Create collision | Both shapes created with unique IDs |
 | Network disconnect | Changes queue locally; sync on reconnect |
 
+### Offline Queue System
+
+When the connection is lost, CollabCanvas continues to work:
+
+1. **Local Changes Continue**: Users can still create and modify shapes
+2. **Operations Queue**: All changes are stored in an offline queue
+3. **Automatic Sync**: When connection restores, queued operations sync automatically
+4. **Status Indicator**: Blue "Syncing..." status shows pending operations
+5. **Conflict Resolution**: Last-write-wins applies to queued operations
+
 ### Visual Feedback
 
-- Connection status indicator (green/yellow/red)
+- Connection status indicator (green = connected, yellow = connecting, blue = syncing, red = disconnected)
 - User presence with colored cursors
 - "Last edited by" indicator on shapes
 
@@ -333,7 +343,7 @@ const debouncedSyncShape = useCallback((shape: CanvasShape) => {
 
 ## AI Canvas Agent
 
-### Supported Commands (24+)
+### Supported Commands (30+)
 
 #### Creation Commands
 - "Create a red circle at position 100, 200"
@@ -344,10 +354,13 @@ const debouncedSyncShape = useCallback((shape: CanvasShape) => {
 
 #### Manipulation Commands
 - "Move the blue rectangle to the center"
+- "Center the rectangle on the canvas"
 - "Resize the circle to be twice as big"
 - "Rotate the text 45 degrees"
 - "Scale the star by 2x"
 - "Duplicate the rectangle"
+- "Change the blend mode to multiply"
+- "Get the current canvas state"
 
 #### Layout Commands
 - "Arrange these shapes in a horizontal row"
@@ -356,14 +369,19 @@ const debouncedSyncShape = useCallback((shape: CanvasShape) => {
 - "Align all shapes left"
 - "Distribute shapes horizontally"
 
-#### Complex Commands
+#### Complex Commands (Multi-Element UI Components)
 - "Create a login form with username and password fields"
+- "Create a signup form with name, email, and password"
 - "Build a navigation bar with 4 menu items"
-- "Make a card layout with title, image, and description"
+- "Make a card layout with title and description"
+- "Create a profile card for John Doe"
+- "Create a search bar"
+- "Create a footer with privacy and terms links"
+- "Create a hero section with headline and CTA button"
 
 ### Technical Implementation
 
-The AI agent uses OpenAI's function calling with 24+ defined tools:
+The AI agent uses OpenAI's function calling with 30+ defined tools:
 
 ```typescript
 const canvasTools: OpenAI.ChatCompletionTool[] = [
