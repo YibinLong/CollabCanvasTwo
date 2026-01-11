@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useCanvasStore } from '@/store/canvasStore';
-import type { CanvasTool } from '@/types/canvas';
+import { useUserStore } from '@/store/userStore';
+import type { CanvasTool, ImageShape } from '@/types/canvas';
+import { nanoid } from 'nanoid';
 
 interface ToolButtonProps {
   tool: CanvasTool['type'];
@@ -41,7 +43,53 @@ const ToolButton: React.FC<ToolButtonProps> = ({
 );
 
 export const Toolbar: React.FC = () => {
-  const { currentTool, setCurrentTool, undo, redo, canUndo, canRedo } = useCanvasStore();
+  const { currentTool, setCurrentTool, undo, redo, canUndo, canRedo, addShape, shapes } = useCanvasStore();
+  const { currentUser } = useUserStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const imageShape: ImageShape = {
+          id: nanoid(),
+          type: 'image',
+          x: 200,
+          y: 200,
+          width: Math.min(img.width, 400),
+          height: Math.min(img.height, 400) * (img.height / img.width),
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          fill: 'transparent',
+          stroke: 'transparent',
+          strokeWidth: 0,
+          opacity: 1,
+          visible: true,
+          locked: false,
+          name: file.name,
+          zIndex: Object.keys(shapes).length,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          createdBy: currentUser?.id || '',
+          lastEditedBy: currentUser?.id || '',
+          src: event.target?.result as string,
+        };
+        addShape(imageShape);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // Tool keyboard shortcuts
   React.useEffect(() => {
@@ -187,6 +235,24 @@ export const Toolbar: React.FC = () => {
           isActive={currentTool.type === 'comment'}
           onClick={() => setCurrentTool({ type: 'comment' })}
         />
+        {/* Image Upload Button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="relative flex flex-col items-center justify-center w-10 h-10 rounded-lg transition-all duration-150 group bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          title="Upload Image"
+        >
+          <ImageIcon />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+            Upload Image
+          </div>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
       </div>
 
       {/* History */}
@@ -308,5 +374,13 @@ const FrameIcon = () => (
 const CommentIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const ImageIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
   </svg>
 );
