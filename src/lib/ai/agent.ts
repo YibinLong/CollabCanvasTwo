@@ -819,6 +819,76 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'addShadow',
+      description: 'Add or modify a shadow effect on a shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: {
+            type: 'string',
+            description: 'ID or name of the shape',
+          },
+          color: {
+            type: 'string',
+            description: 'Shadow color (hex format, e.g., #000000)',
+          },
+          blur: {
+            type: 'number',
+            description: 'Shadow blur radius in pixels',
+          },
+          offsetX: {
+            type: 'number',
+            description: 'Horizontal shadow offset in pixels',
+          },
+          offsetY: {
+            type: 'number',
+            description: 'Vertical shadow offset in pixels',
+          },
+          enabled: {
+            type: 'boolean',
+            description: 'Whether shadow is enabled (default true)',
+          },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createImage',
+      description: 'Create an image placeholder on the canvas',
+      parameters: {
+        type: 'object',
+        properties: {
+          x: {
+            type: 'number',
+            description: 'X position on the canvas',
+          },
+          y: {
+            type: 'number',
+            description: 'Y position on the canvas',
+          },
+          width: {
+            type: 'number',
+            description: 'Width of the image',
+          },
+          height: {
+            type: 'number',
+            description: 'Height of the image',
+          },
+          name: {
+            type: 'string',
+            description: 'Name for the image element',
+          },
+        },
+        required: [],
+      },
+    },
+  },
 ];
 
 export interface AIAgentConfig {
@@ -977,6 +1047,10 @@ Always explain what you did after executing commands.`,
         return this.createFooter(args);
       case 'centerShape':
         return this.centerShape(args);
+      case 'addShadow':
+        return this.addShadow(args);
+      case 'createImage':
+        return this.createImage(args);
       default:
         return `Unknown tool: ${name}`;
     }
@@ -2418,5 +2492,83 @@ Always explain what you did after executing commands.`,
 
     this.onUpdateShape(shape.id, { x: newX, y: newY });
     return `Centered "${shape.name}" on the canvas at (${Math.round(newX)}, ${Math.round(newY)}).`;
+  }
+
+  private addShadow(args: {
+    shapeId: string;
+    color?: string;
+    blur?: number;
+    offsetX?: number;
+    offsetY?: number;
+    enabled?: boolean;
+  }): string {
+    const shape = this.findShapeByIdOrName(args.shapeId);
+    if (!shape) {
+      return `Could not find shape with ID or name "${args.shapeId}".`;
+    }
+
+    const updates: Partial<CanvasShape> = {
+      shadowEnabled: args.enabled !== false,
+      shadowColor: args.color || '#000000',
+      shadowBlur: args.blur ?? 10,
+      shadowOffsetX: args.offsetX ?? 5,
+      shadowOffsetY: args.offsetY ?? 5,
+    };
+
+    this.onUpdateShape(shape.id, updates);
+
+    if (args.enabled === false) {
+      return `Removed shadow from "${shape.name}".`;
+    }
+    return `Added shadow to "${shape.name}" with color ${updates.shadowColor}, blur ${updates.shadowBlur}px, offset (${updates.shadowOffsetX}, ${updates.shadowOffsetY}).`;
+  }
+
+  private createImage(args: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    name?: string;
+  }): string {
+    const x = args.x ?? 200;
+    const y = args.y ?? 200;
+    const width = args.width ?? 200;
+    const height = args.height ?? 150;
+    const name = args.name || 'Image Placeholder';
+
+    // Create a rectangle as placeholder for image
+    const imageShape = this.createBaseShape('rectangle', {
+      x,
+      y,
+      width,
+      height,
+      fill: '#E5E7EB',
+      stroke: '#9CA3AF',
+      strokeWidth: 2,
+      name,
+    });
+
+    // Add placeholder icon text
+    const iconText = this.createBaseShape('text', {
+      x: x + width / 2 - 30,
+      y: y + height / 2 - 10,
+      width: 60,
+      height: 20,
+      fill: '#6B7280',
+      stroke: 'transparent',
+      strokeWidth: 0,
+      name: `${name} Icon`,
+      text: 'Image',
+      fontSize: 14,
+      fontFamily: 'Arial',
+      fontStyle: 'normal',
+      textAlign: 'center',
+      textDecoration: 'none',
+    } as Partial<CanvasShape>);
+
+    this.onAddShape(imageShape);
+    this.onAddShape(iconText);
+
+    return `Created image placeholder "${name}" at (${x}, ${y}) with size ${width}x${height}.`;
   }
 }
