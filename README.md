@@ -454,14 +454,14 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
 
 ## Testing
 
-### Unit Tests (144+ tests)
+### Unit Tests (144 tests)
 ```bash
 npm test           # Run all unit tests
 npm run test:watch # Watch mode
 npm run test:coverage # With coverage report
 ```
 
-### E2E Tests
+### E2E Tests (48 tests)
 ```bash
 npm run test:e2e     # Headless Playwright tests
 npm run test:e2e:ui  # With Playwright UI

@@ -27,7 +27,7 @@ This document details the AI-first development process used to build CollabCanva
    - Add tests
    - Commit changes
 
-3. **Test-Driven Refinement**: Unit tests were written alongside features, with 110+ tests covering stores, utilities, and components.
+3. **Test-Driven Refinement**: Unit tests were written alongside features, with 144+ tests covering stores, utilities, and components, plus 48 E2E tests with Playwright.
 
 ---
 
