@@ -122,6 +122,7 @@ interface CanvasStore {
   restoreVersion: (versionId: string) => boolean;
   deleteVersion: (versionId: string) => void;
   getVersions: () => CanvasVersion[];
+  setVersions: (versions: CanvasVersion[]) => void;
 }
 
 const MAX_HISTORY = 50;
@@ -907,5 +908,7 @@ export const useCanvasStore = create<CanvasStore>()(
     },
 
     getVersions: () => get().versions,
+
+    setVersions: (versions) => set({ versions }),
   }))
 );

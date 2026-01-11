@@ -26,7 +26,8 @@ import {
 import { rtdb, db } from '@/lib/firebase/config';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
-import type { CanvasShape, CursorPosition, User } from '@/types/canvas';
+import { useCommentStore } from '@/store/commentStore';
+import type { CanvasShape, CursorPosition, User, Comment, CommentReply, CanvasVersion } from '@/types/canvas';
 
 interface RealtimeSyncOptions {
   canvasId: string;
@@ -64,17 +65,21 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
 
   const userId = options?.userId || '';
 
-  const { shapes, setShapes } = useCanvasStore();
+  const { shapes, setShapes, versions, setVersions } = useCanvasStore();
   const {
     setCursors,
     setOnlineUsers,
     setConnectionStatus,
     setIsConnected,
   } = useUserStore();
+  const { comments, setComments } = useCommentStore();
 
   const isInitialized = useRef(false);
   const localShapesRef = useRef<Record<string, CanvasShape>>({});
+  const localCommentsRef = useRef<Record<string, Comment>>({});
+  const localVersionsRef = useRef<CanvasVersion[]>([]);
   const pendingUpdates = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const pendingCommentUpdates = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   // Debounce cursor updates for performance
   const cursorUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -148,6 +153,90 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
         await batch.commit();
       } catch (error) {
         console.error('Error batch syncing shapes:', error);
+      }
+    },
+    [canvasId]
+  );
+
+  // Sync comment to Firestore
+  const syncCommentToFirestore = useCallback(
+    async (comment: Comment) => {
+      if (!canvasId) return;
+
+      try {
+        const commentRef = doc(db, `canvases/${canvasId}/comments`, comment.id);
+        await setDoc(commentRef, {
+          ...comment,
+          updatedAt: Timestamp.now(),
+        });
+      } catch (error) {
+        console.error('Error syncing comment to Firestore:', error);
+      }
+    },
+    [canvasId]
+  );
+
+  // Debounced comment sync
+  const debouncedSyncComment = useCallback(
+    (comment: Comment) => {
+      const existingTimeout = pendingCommentUpdates.current.get(comment.id);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      const timeout = setTimeout(() => {
+        syncCommentToFirestore(comment);
+        pendingCommentUpdates.current.delete(comment.id);
+      }, 100);
+
+      pendingCommentUpdates.current.set(comment.id, timeout);
+    },
+    [syncCommentToFirestore]
+  );
+
+  // Sync comment deletion to Firestore
+  const syncCommentDeletion = useCallback(
+    async (commentId: string) => {
+      if (!canvasId) return;
+
+      try {
+        const commentRef = doc(db, `canvases/${canvasId}/comments`, commentId);
+        await deleteDoc(commentRef);
+      } catch (error) {
+        console.error('Error deleting comment from Firestore:', error);
+      }
+    },
+    [canvasId]
+  );
+
+  // Sync version to Firestore
+  const syncVersionToFirestore = useCallback(
+    async (version: CanvasVersion) => {
+      if (!canvasId) return;
+
+      try {
+        const versionRef = doc(db, `canvases/${canvasId}/versions`, version.id);
+        await setDoc(versionRef, {
+          ...version,
+          timestamp: Timestamp.fromMillis(version.timestamp),
+        });
+      } catch (error) {
+        console.error('Error syncing version to Firestore:', error);
+      }
+    },
+    [canvasId]
+  );
+
+  // Sync version deletion to Firestore
+  const syncVersionDeletion = useCallback(
+    async (versionId: string) => {
+      if (!canvasId) return;
+
+      try {
+        const versionRef = doc(db, `canvases/${canvasId}/versions`, versionId);
+        await deleteDoc(versionRef);
+      } catch (error) {
+        console.error('Error deleting version from Firestore:', error);
       }
     },
     [canvasId]
@@ -362,11 +451,141 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     localShapesRef.current = { ...shapes };
   }, [shapes, debouncedSyncShape, syncShapeDeletion]);
 
+  // Listen to comment updates from Firestore
+  useEffect(() => {
+    if (!canvasId) return;
+
+    const commentsRef = collection(db, `canvases/${canvasId}/comments`);
+    const commentsQuery = query(commentsRef, orderBy('createdAt', 'asc'));
+
+    const unsubscribe = onSnapshot(
+      commentsQuery,
+      (snapshot) => {
+        const newComments: Record<string, Comment> = {};
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          newComments[docSnap.id] = {
+            ...data,
+            id: docSnap.id,
+            createdAt: data.createdAt?.toMillis?.() || data.createdAt,
+            updatedAt: data.updatedAt?.toMillis?.() || data.updatedAt,
+            replies: (data.replies || []).map((reply: { id: string; text: string; userId: string; userName: string; userColor: string; createdAt: { toMillis?: () => number } | number }) => ({
+              ...reply,
+              createdAt: typeof reply.createdAt === 'number'
+                ? reply.createdAt
+                : (reply.createdAt?.toMillis?.() || Date.now()),
+            })),
+          } as Comment;
+        });
+
+        // Only update if comments have actually changed
+        if (JSON.stringify(newComments) !== JSON.stringify(localCommentsRef.current)) {
+          localCommentsRef.current = newComments;
+          setComments(newComments);
+        }
+      },
+      (error) => {
+        console.error('Error listening to comments:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [canvasId, setComments]);
+
+  // Sync local comment changes to Firestore
+  useEffect(() => {
+    const currentCommentIds = Object.keys(comments);
+    const localCommentIds = Object.keys(localCommentsRef.current);
+
+    // Find new or updated comments
+    currentCommentIds.forEach((id) => {
+      const currentComment = comments[id];
+      const localComment = localCommentsRef.current[id];
+
+      if (!localComment || JSON.stringify(currentComment) !== JSON.stringify(localComment)) {
+        debouncedSyncComment(currentComment);
+      }
+    });
+
+    // Find deleted comments
+    localCommentIds.forEach((id) => {
+      if (!comments[id]) {
+        syncCommentDeletion(id);
+      }
+    });
+
+    localCommentsRef.current = { ...comments };
+  }, [comments, debouncedSyncComment, syncCommentDeletion]);
+
+  // Listen to version updates from Firestore
+  useEffect(() => {
+    if (!canvasId) return;
+
+    const versionsRef = collection(db, `canvases/${canvasId}/versions`);
+    const versionsQuery = query(versionsRef, orderBy('timestamp', 'desc'));
+
+    const unsubscribe = onSnapshot(
+      versionsQuery,
+      (snapshot) => {
+        const newVersions: CanvasVersion[] = [];
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          newVersions.push({
+            ...data,
+            id: docSnap.id,
+            timestamp: data.timestamp?.toMillis?.() || data.timestamp,
+          } as CanvasVersion);
+        });
+
+        // Only update if versions have actually changed
+        if (JSON.stringify(newVersions) !== JSON.stringify(localVersionsRef.current)) {
+          localVersionsRef.current = newVersions;
+          setVersions(newVersions);
+        }
+      },
+      (error) => {
+        console.error('Error listening to versions:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [canvasId, setVersions]);
+
+  // Sync local version changes to Firestore
+  useEffect(() => {
+    const currentVersionIds = versions.map((v) => v.id);
+    const localVersionIds = localVersionsRef.current.map((v) => v.id);
+
+    // Find new versions
+    versions.forEach((version) => {
+      const localVersion = localVersionsRef.current.find((v) => v.id === version.id);
+
+      if (!localVersion) {
+        syncVersionToFirestore(version);
+      }
+    });
+
+    // Find deleted versions
+    localVersionIds.forEach((id) => {
+      if (!currentVersionIds.includes(id)) {
+        syncVersionDeletion(id);
+      }
+    });
+
+    localVersionsRef.current = [...versions];
+  }, [versions, syncVersionToFirestore, syncVersionDeletion]);
+
   return {
     updateCursorPosition,
     syncShapeToFirestore,
     syncShapeDeletion,
     batchSyncShapes,
+    syncCommentToFirestore,
+    syncCommentDeletion,
+    syncVersionToFirestore,
+    syncVersionDeletion,
     isInitialized: isInitialized.current,
   };
 };
