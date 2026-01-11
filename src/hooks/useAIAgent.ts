@@ -621,6 +621,333 @@ export const useAIAgent = () => {
         return `Canvas has ${shapeList.length} shapes:\n${summary}`;
       }
 
+      case 'createSignupForm': {
+        const x = (args.x as number) || 200;
+        const y = (args.y as number) || 150;
+        const width = 320;
+
+        // Form background
+        addShape(createBaseShape('rectangle', {
+          x: x - 20, y: y - 20, width: width + 40, height: 380,
+          fill: '#FFFFFF', stroke: '#E5E7EB', strokeWidth: 1, name: 'Signup Form Background',
+        }));
+
+        // Title
+        const title = createBaseShape('text', {
+          x, y, width, height: 40, fill: '#1F2937', stroke: 'transparent', strokeWidth: 0, name: 'Signup Title',
+        }) as TextShape;
+        title.text = 'Create Account';
+        title.fontSize = 28;
+        title.fontFamily = 'Arial';
+        title.fontStyle = 'bold';
+        title.textAlign = 'center';
+        title.textDecoration = 'none';
+        addShape(title);
+
+        // Name label
+        const nameLabel = createBaseShape('text', {
+          x, y: y + 50, width, height: 20, fill: '#4B5563', stroke: 'transparent', strokeWidth: 0, name: 'Name Label',
+        }) as TextShape;
+        nameLabel.text = 'Full Name';
+        nameLabel.fontSize = 14;
+        nameLabel.fontFamily = 'Arial';
+        nameLabel.fontStyle = 'normal';
+        nameLabel.textAlign = 'left';
+        nameLabel.textDecoration = 'none';
+        addShape(nameLabel);
+
+        // Name input
+        addShape(createBaseShape('rectangle', {
+          x, y: y + 75, width, height: 40, fill: '#F9FAFB', stroke: '#D1D5DB', strokeWidth: 1, name: 'Name Input',
+        }));
+
+        // Email label
+        const emailLabel = createBaseShape('text', {
+          x, y: y + 130, width, height: 20, fill: '#4B5563', stroke: 'transparent', strokeWidth: 0, name: 'Email Label',
+        }) as TextShape;
+        emailLabel.text = 'Email Address';
+        emailLabel.fontSize = 14;
+        emailLabel.fontFamily = 'Arial';
+        emailLabel.fontStyle = 'normal';
+        emailLabel.textAlign = 'left';
+        emailLabel.textDecoration = 'none';
+        addShape(emailLabel);
+
+        // Email input
+        addShape(createBaseShape('rectangle', {
+          x, y: y + 155, width, height: 40, fill: '#F9FAFB', stroke: '#D1D5DB', strokeWidth: 1, name: 'Email Input',
+        }));
+
+        // Password label
+        const passwordLabel = createBaseShape('text', {
+          x, y: y + 210, width, height: 20, fill: '#4B5563', stroke: 'transparent', strokeWidth: 0, name: 'Password Label',
+        }) as TextShape;
+        passwordLabel.text = 'Password';
+        passwordLabel.fontSize = 14;
+        passwordLabel.fontFamily = 'Arial';
+        passwordLabel.fontStyle = 'normal';
+        passwordLabel.textAlign = 'left';
+        passwordLabel.textDecoration = 'none';
+        addShape(passwordLabel);
+
+        // Password input
+        addShape(createBaseShape('rectangle', {
+          x, y: y + 235, width, height: 40, fill: '#F9FAFB', stroke: '#D1D5DB', strokeWidth: 1, name: 'Password Input',
+        }));
+
+        // Submit button
+        addShape(createBaseShape('rectangle', {
+          x, y: y + 300, width, height: 44, fill: '#10B981', stroke: '#059669', strokeWidth: 0, name: 'Signup Button',
+        }));
+
+        // Button text
+        const buttonText = createBaseShape('text', {
+          x, y: y + 310, width, height: 24, fill: '#FFFFFF', stroke: 'transparent', strokeWidth: 0, name: 'Signup Button Text',
+        }) as TextShape;
+        buttonText.text = 'Sign Up';
+        buttonText.fontSize = 16;
+        buttonText.fontFamily = 'Arial';
+        buttonText.fontStyle = 'bold';
+        buttonText.textAlign = 'center';
+        buttonText.textDecoration = 'none';
+        addShape(buttonText);
+
+        return 'Created a signup form with name, email, password fields and submit button.';
+      }
+
+      case 'createProfileCard': {
+        const x = (args.x as number) || 200;
+        const y = (args.y as number) || 200;
+        const name = args.name as string;
+        const title = (args.title as string) || 'Team Member';
+        const width = 240;
+
+        // Card background
+        addShape(createBaseShape('rectangle', {
+          x, y, width, height: 200,
+          fill: '#FFFFFF', stroke: '#E5E7EB', strokeWidth: 1, name: 'Profile Card Background',
+        }));
+
+        // Avatar placeholder
+        addShape(createBaseShape('circle', {
+          x: x + width / 2 - 40, y: y + 20, width: 80, height: 80,
+          fill: '#6366F1', stroke: '#4F46E5', strokeWidth: 2, name: 'Avatar',
+        }));
+
+        // Avatar initial
+        const initial = createBaseShape('text', {
+          x: x + width / 2 - 40, y: y + 45, width: 80, height: 30,
+          fill: '#FFFFFF', stroke: 'transparent', strokeWidth: 0, name: 'Avatar Initial',
+        }) as TextShape;
+        initial.text = name.charAt(0).toUpperCase();
+        initial.fontSize = 32;
+        initial.fontFamily = 'Arial';
+        initial.fontStyle = 'bold';
+        initial.textAlign = 'center';
+        initial.textDecoration = 'none';
+        addShape(initial);
+
+        // Name
+        const nameText = createBaseShape('text', {
+          x: x + 16, y: y + 115, width: width - 32, height: 28,
+          fill: '#1F2937', stroke: 'transparent', strokeWidth: 0, name: 'Profile Name',
+        }) as TextShape;
+        nameText.text = name;
+        nameText.fontSize = 18;
+        nameText.fontFamily = 'Arial';
+        nameText.fontStyle = 'bold';
+        nameText.textAlign = 'center';
+        nameText.textDecoration = 'none';
+        addShape(nameText);
+
+        // Title
+        const titleText = createBaseShape('text', {
+          x: x + 16, y: y + 145, width: width - 32, height: 24,
+          fill: '#6B7280', stroke: 'transparent', strokeWidth: 0, name: 'Profile Title',
+        }) as TextShape;
+        titleText.text = title;
+        titleText.fontSize = 14;
+        titleText.fontFamily = 'Arial';
+        titleText.fontStyle = 'normal';
+        titleText.textAlign = 'center';
+        titleText.textDecoration = 'none';
+        addShape(titleText);
+
+        return `Created a profile card for "${name}".`;
+      }
+
+      case 'createSearchBar': {
+        const x = (args.x as number) || 200;
+        const y = (args.y as number) || 100;
+        const width = (args.width as number) || 400;
+        const placeholder = (args.placeholder as string) || 'Search...';
+
+        // Search container
+        addShape(createBaseShape('rectangle', {
+          x, y, width, height: 44,
+          fill: '#FFFFFF', stroke: '#D1D5DB', strokeWidth: 1, name: 'Search Container',
+        }));
+
+        // Search icon placeholder
+        addShape(createBaseShape('circle', {
+          x: x + 12, y: y + 12, width: 20, height: 20,
+          fill: 'transparent', stroke: '#9CA3AF', strokeWidth: 2, name: 'Search Icon',
+        }));
+
+        // Placeholder text
+        const placeholderText = createBaseShape('text', {
+          x: x + 44, y: y + 12, width: width - 100, height: 20,
+          fill: '#9CA3AF', stroke: 'transparent', strokeWidth: 0, name: 'Search Placeholder',
+        }) as TextShape;
+        placeholderText.text = placeholder;
+        placeholderText.fontSize = 14;
+        placeholderText.fontFamily = 'Arial';
+        placeholderText.fontStyle = 'normal';
+        placeholderText.textAlign = 'left';
+        placeholderText.textDecoration = 'none';
+        addShape(placeholderText);
+
+        // Search button
+        addShape(createBaseShape('rectangle', {
+          x: x + width - 70, y: y + 6, width: 60, height: 32,
+          fill: '#3B82F6', stroke: '#2563EB', strokeWidth: 0, name: 'Search Button',
+        }));
+
+        const buttonText = createBaseShape('text', {
+          x: x + width - 70, y: y + 14, width: 60, height: 20,
+          fill: '#FFFFFF', stroke: 'transparent', strokeWidth: 0, name: 'Search Button Text',
+        }) as TextShape;
+        buttonText.text = 'Search';
+        buttonText.fontSize = 12;
+        buttonText.fontFamily = 'Arial';
+        buttonText.fontStyle = 'bold';
+        buttonText.textAlign = 'center';
+        buttonText.textDecoration = 'none';
+        addShape(buttonText);
+
+        return `Created a search bar with placeholder "${placeholder}".`;
+      }
+
+      case 'createFooter': {
+        const x = (args.x as number) || 50;
+        const y = (args.y as number) || 500;
+        const links = (args.links as string[]) || ['Privacy', 'Terms', 'Contact', 'About'];
+        const copyright = (args.copyright as string) || '© 2024 Company. All rights reserved.';
+        const width = 700;
+
+        // Footer background
+        addShape(createBaseShape('rectangle', {
+          x: x - 20, y: y - 10, width: width + 40, height: 80,
+          fill: '#1F2937', stroke: 'transparent', strokeWidth: 0, name: 'Footer Background',
+        }));
+
+        // Links
+        const linkWidth = 80;
+        const totalLinksWidth = links.length * linkWidth + (links.length - 1) * 20;
+        const startX = x + (width - totalLinksWidth) / 2;
+
+        links.forEach((link, index) => {
+          const linkText = createBaseShape('text', {
+            x: startX + index * (linkWidth + 20), y: y + 5, width: linkWidth, height: 20,
+            fill: '#D1D5DB', stroke: 'transparent', strokeWidth: 0, name: `Footer Link ${index + 1}`,
+          }) as TextShape;
+          linkText.text = link;
+          linkText.fontSize = 14;
+          linkText.fontFamily = 'Arial';
+          linkText.fontStyle = 'normal';
+          linkText.textAlign = 'center';
+          linkText.textDecoration = 'none';
+          addShape(linkText);
+        });
+
+        // Copyright
+        const copyrightText = createBaseShape('text', {
+          x, y: y + 35, width, height: 20,
+          fill: '#6B7280', stroke: 'transparent', strokeWidth: 0, name: 'Copyright',
+        }) as TextShape;
+        copyrightText.text = copyright;
+        copyrightText.fontSize = 12;
+        copyrightText.fontFamily = 'Arial';
+        copyrightText.fontStyle = 'normal';
+        copyrightText.textAlign = 'center';
+        copyrightText.textDecoration = 'none';
+        addShape(copyrightText);
+
+        return `Created a footer with ${links.length} links.`;
+      }
+
+      case 'createHeroSection': {
+        const x = (args.x as number) || 100;
+        const y = (args.y as number) || 100;
+        const headline = args.headline as string;
+        const subtext = (args.subtext as string) || 'Discover the power of our platform.';
+        const ctaText = (args.ctaText as string) || 'Get Started';
+        const width = 600;
+
+        // Hero background
+        addShape(createBaseShape('rectangle', {
+          x: x - 40, y: y - 40, width: width + 80, height: 280,
+          fill: '#F3F4F6', stroke: 'transparent', strokeWidth: 0, name: 'Hero Background',
+        }));
+
+        // Headline
+        const headlineText = createBaseShape('text', {
+          x, y, width, height: 60,
+          fill: '#111827', stroke: 'transparent', strokeWidth: 0, name: 'Hero Headline',
+        }) as TextShape;
+        headlineText.text = headline;
+        headlineText.fontSize = 48;
+        headlineText.fontFamily = 'Arial';
+        headlineText.fontStyle = 'bold';
+        headlineText.textAlign = 'center';
+        headlineText.textDecoration = 'none';
+        addShape(headlineText);
+
+        // Subtext
+        const subtextEl = createBaseShape('text', {
+          x, y: y + 80, width, height: 40,
+          fill: '#6B7280', stroke: 'transparent', strokeWidth: 0, name: 'Hero Subtext',
+        }) as TextShape;
+        subtextEl.text = subtext;
+        subtextEl.fontSize = 18;
+        subtextEl.fontFamily = 'Arial';
+        subtextEl.fontStyle = 'normal';
+        subtextEl.textAlign = 'center';
+        subtextEl.textDecoration = 'none';
+        addShape(subtextEl);
+
+        // CTA Button
+        const buttonWidth = 160;
+        addShape(createBaseShape('rectangle', {
+          x: x + (width - buttonWidth) / 2, y: y + 150, width: buttonWidth, height: 50,
+          fill: '#3B82F6', stroke: '#2563EB', strokeWidth: 0, name: 'Hero CTA Button',
+        }));
+
+        const ctaTextEl = createBaseShape('text', {
+          x: x + (width - buttonWidth) / 2, y: y + 162, width: buttonWidth, height: 26,
+          fill: '#FFFFFF', stroke: 'transparent', strokeWidth: 0, name: 'Hero CTA Text',
+        }) as TextShape;
+        ctaTextEl.text = ctaText;
+        ctaTextEl.fontSize = 16;
+        ctaTextEl.fontFamily = 'Arial';
+        ctaTextEl.fontStyle = 'bold';
+        ctaTextEl.textAlign = 'center';
+        ctaTextEl.textDecoration = 'none';
+        addShape(ctaTextEl);
+
+        return `Created a hero section with headline "${headline}".`;
+      }
+
+      case 'centerShape': {
+        const shape = findShapeByIdOrName(args.shapeId as string);
+        if (!shape) return `Could not find shape "${args.shapeId}".`;
+        // Center on canvas (assuming 1000x800 canvas size, adjusted for shape dimensions)
+        const centerX = 500 - (shape.width * shape.scaleX) / 2;
+        const centerY = 400 - (shape.height * shape.scaleY) / 2;
+        updateShape(shape.id, { x: centerX, y: centerY });
+        return `Centered "${shape.name}" on the canvas.`;
+      }
+
       default:
         return `Unknown tool: ${name}`;
     }

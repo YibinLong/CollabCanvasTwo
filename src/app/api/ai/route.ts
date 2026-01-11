@@ -377,6 +377,153 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'getCanvasState',
+      description: 'Get the current state of all shapes on the canvas with their properties',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'changeBlendMode',
+      description: 'Change the blend mode of a shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: { type: 'string', description: 'ID or name of the shape' },
+          blendMode: {
+            type: 'string',
+            enum: ['normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion'],
+            description: 'Blend mode to apply',
+          },
+        },
+        required: ['shapeId', 'blendMode'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createFrame',
+      description: 'Create a frame/artboard to organize shapes',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Name of the frame' },
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+          width: { type: 'number', description: 'Width of the frame' },
+          height: { type: 'number', description: 'Height of the frame' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createSignupForm',
+      description: 'Create a signup/registration form with name, email, password fields and submit button',
+      parameters: {
+        type: 'object',
+        properties: {
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createProfileCard',
+      description: 'Create a user profile card with avatar, name, and description',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'User name to display' },
+          title: { type: 'string', description: 'User title or role' },
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+        },
+        required: ['name'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createSearchBar',
+      description: 'Create a search input with icon and button',
+      parameters: {
+        type: 'object',
+        properties: {
+          placeholder: { type: 'string', description: 'Placeholder text' },
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+          width: { type: 'number', description: 'Width of the search bar' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createFooter',
+      description: 'Create a page footer with links and copyright',
+      parameters: {
+        type: 'object',
+        properties: {
+          links: { type: 'array', items: { type: 'string' }, description: 'Footer link names' },
+          copyright: { type: 'string', description: 'Copyright text' },
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createHeroSection',
+      description: 'Create a hero section with headline, subtext, and CTA button',
+      parameters: {
+        type: 'object',
+        properties: {
+          headline: { type: 'string', description: 'Main headline text' },
+          subtext: { type: 'string', description: 'Supporting text' },
+          ctaText: { type: 'string', description: 'Call-to-action button text' },
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+        },
+        required: ['headline'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'centerShape',
+      description: 'Move a shape to the center of the canvas',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: { type: 'string', description: 'ID or name of the shape to center' },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
 ];
 
 export async function POST(request: NextRequest) {
