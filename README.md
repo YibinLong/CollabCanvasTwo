@@ -23,9 +23,10 @@ A real-time collaborative design tool with AI-powered canvas manipulation. Built
 
 ### Canvas Features
 - **Pan and Zoom**: Smooth scrolling with mousewheel and drag navigation
-- **8 Shape Types**: Rectangles, circles, triangles, stars, lines, text, images, frames
+- **9 Shape Types**: Rectangles, circles, triangles, stars, lines, text, images, frames, vector paths
+- **Pen Tool**: Create vector paths with bezier curve support (click-to-add-points, close by clicking first point)
 - **Transformations**: Move, resize, rotate, scale operations
-- **Multi-select**: Shift-click or selection box for multiple shapes
+- **Multi-select**: Shift-click, selection box, or lasso for multiple shapes
 - **Grid System**: Configurable grid with snap-to-grid support
 - **Smart Guides**: Visual alignment guides during shape manipulation
 - **Undo/Redo**: 50+ levels of history with Cmd+Z/Cmd+Shift+Z
@@ -62,8 +63,8 @@ Natural language commands to create and modify shapes:
 
 ### Advanced Features (Tier 1-3)
 - **Tier 1**: Color picker with recent colors, undo/redo, keyboard shortcuts, export (PNG/SVG), snap-to-grid, object grouping, copy/paste
-- **Tier 2**: Component system, layers panel, alignment tools, z-index management, selection tools, design tokens (colors, text styles), canvas frames
-- **Tier 3**: Collaborative comments with threads, version history with restore
+- **Tier 2**: Component system, layers panel, alignment tools, z-index management, selection tools (lasso select), design tokens (colors, text styles), canvas frames
+- **Tier 3**: Collaborative comments with threads, version history with restore, vector path editing (pen tool), prototyping/interactions mode
 
 ## Architecture Overview
 
@@ -405,6 +406,7 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
 
 ## Keyboard Shortcuts
 
+### Tool Shortcuts
 | Shortcut | Action |
 |----------|--------|
 | V | Select tool |
@@ -417,24 +419,42 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
 | T | Text tool |
 | L | Line tool |
 | F | Frame tool |
+| P | Pen tool (vector paths) |
 | C | Comment tool |
+
+### Editing Shortcuts
+| Shortcut | Action |
+|----------|--------|
 | Delete/Backspace | Delete selected |
-| Escape | Deselect all |
+| Escape | Deselect all / Cancel pen drawing |
+| Enter | Finalize pen path (open path) |
+| Arrow keys | Nudge selected (1px) |
+| Shift+Arrow keys | Nudge selected (10px) |
 | Cmd/Ctrl+Z | Undo |
 | Cmd/Ctrl+Shift+Z | Redo |
 | Cmd/Ctrl+C | Copy |
 | Cmd/Ctrl+X | Cut |
 | Cmd/Ctrl+V | Paste |
+| Cmd/Ctrl+D | Duplicate |
 | Cmd/Ctrl+A | Select all |
 | Cmd/Ctrl+G | Group selection |
 | Cmd/Ctrl+Shift+G | Ungroup |
+| Cmd/Ctrl+] | Bring to front |
+| Cmd/Ctrl+[ | Send to back |
+
+### View Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| Cmd/Ctrl+= | Zoom in |
+| Cmd/Ctrl+- | Zoom out |
+| Cmd/Ctrl+0 | Reset zoom to 100% |
 | Cmd/Ctrl+\ | Toggle layers panel |
-| Cmd/Ctrl+P | Toggle properties panel |
+| Cmd/Ctrl+Shift+P | Toggle properties panel |
 | Cmd/Ctrl+Shift+E | Export as PNG |
 
 ## Testing
 
-### Unit Tests (110+ tests)
+### Unit Tests (144+ tests)
 ```bash
 npm test           # Run all unit tests
 npm run test:watch # Watch mode
@@ -452,10 +472,11 @@ npm run test:e2e:ui  # With Playwright UI
 - User store state management
 - Comment store with threads
 - Component store (components, design tokens)
+- Prototype store (preview mode, navigation, interactions)
 - Export utilities (SVG, JSON)
 - Smart guides calculations
 - Component rendering
-- E2E: Page loading, toolbar, keyboard shortcuts
+- E2E: Page loading, toolbar, keyboard shortcuts, tools, viewport
 
 ## Project Structure
 
@@ -491,14 +512,15 @@ src/
 │   ├── canvasStore.ts        # Shapes, history, selection
 │   ├── userStore.ts          # Auth, presence, cursors
 │   ├── commentStore.ts       # Comments, threads
-│   └── componentStore.ts     # Components, design tokens
+│   ├── componentStore.ts     # Components, design tokens
+│   └── prototypeStore.ts     # Prototype mode, interactions
 ├── lib/
 │   ├── firebase/config.ts    # Firebase initialization
 │   ├── ai/agent.ts           # AI agent (30+ tools)
 │   ├── exportUtils.ts        # PNG/SVG/JSON export
 │   └── smartGuidesUtils.ts   # Snap calculations
 ├── types/canvas.ts           # TypeScript definitions
-└── __tests__/                # Unit tests (110+)
+└── __tests__/                # Unit tests (144+)
 
 e2e/                          # Playwright E2E tests
 ```
