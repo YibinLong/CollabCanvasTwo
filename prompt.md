@@ -11,3 +11,5 @@ NOTE:
 3. You should have access to Context7 mcp for searching documentation and Playwright mcp for testing, so use those when you deem necessary.
 
 4. I want to eventually deploy this on Vercel, so make it easy for it to do so.
+
+5. I'll manually set up the Firebase and the OpenAI AI API Key, so just have placeholders there for now.
