@@ -1,10 +1,8 @@
 import { shapesToSVG, exportToJSON } from '@/lib/exportUtils';
-import type { CanvasShape, TextShape, RectangleShape } from '@/types/canvas';
+import type { CanvasShape, TextShape, RectangleShape, CircleShape, TriangleShape, StarShape, LineShape } from '@/types/canvas';
 
 describe('exportUtils', () => {
-  const createMockShape = (overrides: Partial<CanvasShape> = {}): CanvasShape => ({
-    id: 'shape-1',
-    type: 'rectangle',
+  const createBaseProps = () => ({
     x: 100,
     y: 100,
     width: 200,
@@ -24,12 +22,63 @@ describe('exportUtils', () => {
     updatedAt: Date.now(),
     createdBy: 'user-1',
     lastEditedBy: 'user-1',
+  });
+
+  const createRectangle = (overrides: Partial<RectangleShape> = {}): RectangleShape => ({
+    id: 'shape-1',
+    type: 'rectangle',
+    ...createBaseProps(),
+    ...overrides,
+  });
+
+  const createCircle = (overrides: Partial<CircleShape> = {}): CircleShape => ({
+    id: 'shape-1',
+    type: 'circle',
+    ...createBaseProps(),
+    ...overrides,
+  });
+
+  const createTriangle = (overrides: Partial<TriangleShape> = {}): TriangleShape => ({
+    id: 'shape-1',
+    type: 'triangle',
+    ...createBaseProps(),
+    ...overrides,
+  });
+
+  const createStar = (overrides: Partial<StarShape> = {}): StarShape => ({
+    id: 'shape-1',
+    type: 'star',
+    numPoints: 5,
+    innerRadius: 20,
+    outerRadius: 50,
+    ...createBaseProps(),
+    ...overrides,
+  });
+
+  const createLine = (overrides: Partial<LineShape> = {}): LineShape => ({
+    id: 'shape-1',
+    type: 'line',
+    points: [0, 0, 100, 100],
+    ...createBaseProps(),
+    ...overrides,
+  });
+
+  const createText = (overrides: Partial<TextShape> = {}): TextShape => ({
+    id: 'shape-1',
+    type: 'text',
+    text: 'Hello World',
+    fontSize: 24,
+    fontFamily: 'Arial',
+    fontStyle: 'normal',
+    textAlign: 'left',
+    textDecoration: 'none',
+    ...createBaseProps(),
     ...overrides,
   });
 
   describe('shapesToSVG', () => {
     it('should generate valid SVG for rectangles', () => {
-      const shapes = [createMockShape()];
+      const shapes: CanvasShape[] = [createRectangle()];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('<?xml version="1.0" encoding="UTF-8"?>');
@@ -40,57 +89,36 @@ describe('exportUtils', () => {
     });
 
     it('should generate valid SVG for circles', () => {
-      const shapes = [createMockShape({ type: 'circle' })];
+      const shapes: CanvasShape[] = [createCircle()];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('<ellipse');
     });
 
     it('should generate valid SVG for triangles', () => {
-      const shapes = [createMockShape({ type: 'triangle' })];
+      const shapes: CanvasShape[] = [createTriangle()];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('<polygon');
     });
 
     it('should generate valid SVG for stars', () => {
-      const shapes = [
-        createMockShape({
-          type: 'star',
-          numPoints: 5,
-          innerRadius: 20,
-          outerRadius: 50,
-        } as Partial<CanvasShape>),
-      ];
+      const shapes: CanvasShape[] = [createStar()];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('<polygon');
     });
 
     it('should generate valid SVG for lines', () => {
-      const shapes = [
-        createMockShape({
-          type: 'line',
-          points: [0, 0, 100, 100],
-        } as Partial<CanvasShape>),
-      ];
+      const shapes: CanvasShape[] = [createLine()];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('<line');
     });
 
     it('should generate valid SVG for text', () => {
-      const textShape: TextShape = {
-        ...createMockShape({ type: 'text' }),
-        type: 'text',
-        text: 'Hello World',
-        fontSize: 24,
-        fontFamily: 'Arial',
-        fontStyle: 'normal',
-        textAlign: 'left',
-        textDecoration: 'none',
-      };
-      const svg = shapesToSVG([textShape]);
+      const shapes: CanvasShape[] = [createText()];
+      const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('<text');
       expect(svg).toContain('Hello World');
@@ -99,40 +127,31 @@ describe('exportUtils', () => {
     });
 
     it('should escape special XML characters in text', () => {
-      const textShape: TextShape = {
-        ...createMockShape({ type: 'text' }),
-        type: 'text',
-        text: '<script>alert("XSS")</script>',
-        fontSize: 24,
-        fontFamily: 'Arial',
-        fontStyle: 'normal',
-        textAlign: 'left',
-        textDecoration: 'none',
-      };
-      const svg = shapesToSVG([textShape]);
+      const shapes: CanvasShape[] = [createText({ text: '<script>alert("XSS")</script>' })];
+      const svg = shapesToSVG(shapes);
 
       expect(svg).not.toContain('<script>');
       expect(svg).toContain('&lt;script&gt;');
     });
 
     it('should apply rotation transform', () => {
-      const shapes = [createMockShape({ rotation: 45 })];
+      const shapes: CanvasShape[] = [createRectangle({ rotation: 45 })];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('transform="rotate(45');
     });
 
     it('should respect opacity', () => {
-      const shapes = [createMockShape({ opacity: 0.5 })];
+      const shapes: CanvasShape[] = [createRectangle({ opacity: 0.5 })];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('opacity="0.5"');
     });
 
     it('should exclude hidden shapes', () => {
-      const shapes = [
-        createMockShape({ id: 'visible', visible: true }),
-        createMockShape({ id: 'hidden', visible: false }),
+      const shapes: CanvasShape[] = [
+        createRectangle({ id: 'visible', visible: true }),
+        createRectangle({ id: 'hidden', visible: false }),
       ];
       const svg = shapesToSVG(shapes);
 
@@ -142,9 +161,9 @@ describe('exportUtils', () => {
     });
 
     it('should sort shapes by zIndex', () => {
-      const shapes = [
-        createMockShape({ id: 'back', zIndex: 0, fill: '#FF0000' }),
-        createMockShape({ id: 'front', zIndex: 1, fill: '#00FF00' }),
+      const shapes: CanvasShape[] = [
+        createRectangle({ id: 'back', zIndex: 0, fill: '#FF0000' }),
+        createRectangle({ id: 'front', zIndex: 1, fill: '#00FF00' }),
       ];
       const svg = shapesToSVG(shapes);
 
@@ -155,11 +174,7 @@ describe('exportUtils', () => {
     });
 
     it('should include corner radius for rectangles', () => {
-      const shapes = [
-        createMockShape({
-          cornerRadius: 10,
-        } as Partial<RectangleShape>),
-      ];
+      const shapes: CanvasShape[] = [createRectangle({ cornerRadius: 10 })];
       const svg = shapesToSVG(shapes);
 
       expect(svg).toContain('rx="10"');
@@ -167,7 +182,7 @@ describe('exportUtils', () => {
     });
 
     it('should accept custom dimensions', () => {
-      const shapes = [createMockShape()];
+      const shapes: CanvasShape[] = [createRectangle()];
       const svg = shapesToSVG(shapes, { width: 800, height: 600 });
 
       expect(svg).toContain('width="800"');
@@ -175,7 +190,7 @@ describe('exportUtils', () => {
     });
 
     it('should accept custom background color', () => {
-      const shapes = [createMockShape()];
+      const shapes: CanvasShape[] = [createRectangle()];
       const svg = shapesToSVG(shapes, { background: '#f0f0f0' });
 
       expect(svg).toContain('fill="#f0f0f0"');
@@ -185,8 +200,8 @@ describe('exportUtils', () => {
   describe('exportToJSON', () => {
     it('should export shapes with metadata', () => {
       const shapes: Record<string, CanvasShape> = {
-        'shape-1': createMockShape({ id: 'shape-1' }),
-        'shape-2': createMockShape({ id: 'shape-2' }),
+        'shape-1': createRectangle({ id: 'shape-1' }),
+        'shape-2': createRectangle({ id: 'shape-2' }),
       };
 
       const json = exportToJSON(shapes, 'canvas-123', { name: 'My Canvas' });
@@ -210,7 +225,7 @@ describe('exportUtils', () => {
 
     it('should preserve all shape properties', () => {
       const shapes: Record<string, CanvasShape> = {
-        'shape-1': createMockShape({
+        'shape-1': createRectangle({
           id: 'shape-1',
           name: 'My Rectangle',
           fill: '#FFFF00',

@@ -45,6 +45,7 @@ describe('userStore', () => {
       userColor: '#FF5733',
       x: 100,
       y: 200,
+      timestamp: Date.now(),
     };
 
     it('should set cursors', () => {
