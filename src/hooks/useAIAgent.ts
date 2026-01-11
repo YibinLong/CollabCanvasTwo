@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
-import type { CanvasShape, TextShape } from '@/types/canvas';
+import type { CanvasShape, TextShape, RectangleShape } from '@/types/canvas';
 
 interface ToolCall {
   name: string;
@@ -13,7 +13,7 @@ interface ToolCall {
 
 export const useAIAgent = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const { shapes, addShape, updateShape, deleteShape } = useCanvasStore();
+  const { shapes, addShape, updateShape, deleteShape, clearShapes } = useCanvasStore();
   const { currentUser } = useUserStore();
   const shapesRef = useRef(shapes);
 
@@ -318,10 +318,188 @@ export const useAIAgent = () => {
         return `Created a card with title "${args.title}"${description ? ` and description` : ''}.`;
       }
 
+      case 'scaleShape': {
+        const shape = findShapeByIdOrName(args.shapeId as string);
+        if (!shape) return `Could not find shape "${args.shapeId}".`;
+        updateShape(shape.id, { scaleX: args.scaleX as number, scaleY: args.scaleY as number });
+        return `Scaled "${shape.name}" to ${args.scaleX}x${args.scaleY}.`;
+      }
+
+      case 'duplicateShape': {
+        const shape = findShapeByIdOrName(args.shapeId as string);
+        if (!shape) return `Could not find shape "${args.shapeId}".`;
+        const offsetX = (args.offsetX as number) || 20;
+        const offsetY = (args.offsetY as number) || 20;
+        const newShape = {
+          ...shape,
+          id: nanoid(),
+          x: shape.x + offsetX,
+          y: shape.y + offsetY,
+          name: `${shape.name} Copy`,
+          zIndex: Object.keys(shapesRef.current).length,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        addShape(newShape);
+        return `Duplicated "${shape.name}" to (${newShape.x}, ${newShape.y}).`;
+      }
+
+      case 'clearCanvas': {
+        clearShapes();
+        return 'Cleared all shapes from the canvas.';
+      }
+
+      case 'changeOpacity': {
+        const shape = findShapeByIdOrName(args.shapeId as string);
+        if (!shape) return `Could not find shape "${args.shapeId}".`;
+        const opacity = Math.max(0, Math.min(1, args.opacity as number));
+        updateShape(shape.id, { opacity });
+        return `Changed opacity of "${shape.name}" to ${Math.round(opacity * 100)}%.`;
+      }
+
+      case 'changeStroke': {
+        const shape = findShapeByIdOrName(args.shapeId as string);
+        if (!shape) return `Could not find shape "${args.shapeId}".`;
+        const updates: Partial<CanvasShape> = {};
+        if (args.strokeColor) updates.stroke = args.strokeColor as string;
+        if (args.strokeWidth !== undefined) updates.strokeWidth = args.strokeWidth as number;
+        updateShape(shape.id, updates);
+        return `Changed stroke of "${shape.name}".`;
+      }
+
+      case 'listShapes': {
+        const shapeList = Object.values(shapesRef.current);
+        if (shapeList.length === 0) return 'The canvas is empty.';
+        const list = shapeList
+          .map((s) => `- ${s.name} (${s.type}) at (${Math.round(s.x)}, ${Math.round(s.y)}), size: ${Math.round(s.width)}x${Math.round(s.height)}`)
+          .join('\n');
+        return `Canvas has ${shapeList.length} shapes:\n${list}`;
+      }
+
+      case 'alignShapes': {
+        const shapeIds = args.shapeIds as string[];
+        const alignment = args.alignment as string;
+        const shapesToAlign = shapeIds
+          .map((id) => findShapeByIdOrName(id))
+          .filter((s): s is CanvasShape => s !== undefined);
+
+        if (shapesToAlign.length < 2) return 'Need at least 2 shapes to align.';
+
+        // Find bounds
+        const minX = Math.min(...shapesToAlign.map((s) => s.x));
+        const maxX = Math.max(...shapesToAlign.map((s) => s.x + s.width));
+        const minY = Math.min(...shapesToAlign.map((s) => s.y));
+        const maxY = Math.max(...shapesToAlign.map((s) => s.y + s.height));
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        shapesToAlign.forEach((shape) => {
+          switch (alignment) {
+            case 'left':
+              updateShape(shape.id, { x: minX });
+              break;
+            case 'right':
+              updateShape(shape.id, { x: maxX - shape.width });
+              break;
+            case 'top':
+              updateShape(shape.id, { y: minY });
+              break;
+            case 'bottom':
+              updateShape(shape.id, { y: maxY - shape.height });
+              break;
+            case 'centerH':
+              updateShape(shape.id, { x: centerX - shape.width / 2 });
+              break;
+            case 'centerV':
+              updateShape(shape.id, { y: centerY - shape.height / 2 });
+              break;
+          }
+        });
+
+        return `Aligned ${shapesToAlign.length} shapes to ${alignment}.`;
+      }
+
+      case 'distributeShapes': {
+        const shapeIds = args.shapeIds as string[];
+        const direction = args.direction as string;
+        const shapesToDistribute = shapeIds
+          .map((id) => findShapeByIdOrName(id))
+          .filter((s): s is CanvasShape => s !== undefined);
+
+        if (shapesToDistribute.length < 3) return 'Need at least 3 shapes to distribute.';
+
+        if (direction === 'horizontal') {
+          shapesToDistribute.sort((a, b) => a.x - b.x);
+          const minX = shapesToDistribute[0].x;
+          const maxX = shapesToDistribute[shapesToDistribute.length - 1].x;
+          const totalGap = maxX - minX;
+          const gap = totalGap / (shapesToDistribute.length - 1);
+
+          shapesToDistribute.forEach((shape, i) => {
+            if (i > 0 && i < shapesToDistribute.length - 1) {
+              updateShape(shape.id, { x: minX + gap * i });
+            }
+          });
+        } else {
+          shapesToDistribute.sort((a, b) => a.y - b.y);
+          const minY = shapesToDistribute[0].y;
+          const maxY = shapesToDistribute[shapesToDistribute.length - 1].y;
+          const totalGap = maxY - minY;
+          const gap = totalGap / (shapesToDistribute.length - 1);
+
+          shapesToDistribute.forEach((shape, i) => {
+            if (i > 0 && i < shapesToDistribute.length - 1) {
+              updateShape(shape.id, { y: minY + gap * i });
+            }
+          });
+        }
+
+        return `Distributed ${shapesToDistribute.length} shapes ${direction}ly.`;
+      }
+
+      case 'createButton': {
+        const x = (args.x as number) || 200;
+        const y = (args.y as number) || 200;
+        const text = args.text as string;
+        const variant = (args.variant as string) || 'primary';
+        const width = 120;
+        const height = 40;
+
+        const variants: Record<string, { fill: string; stroke: string; textColor: string }> = {
+          primary: { fill: '#3B82F6', stroke: '#2563EB', textColor: '#FFFFFF' },
+          secondary: { fill: '#6B7280', stroke: '#4B5563', textColor: '#FFFFFF' },
+          outline: { fill: 'transparent', stroke: '#3B82F6', textColor: '#3B82F6' },
+          danger: { fill: '#EF4444', stroke: '#DC2626', textColor: '#FFFFFF' },
+        };
+
+        const style = variants[variant] || variants.primary;
+
+        const buttonBg = createBaseShape('rectangle', {
+          x, y, width, height,
+          fill: style.fill, stroke: style.stroke, strokeWidth: 2, name: `${text} Button`,
+        }) as RectangleShape;
+        buttonBg.cornerRadius = 6;
+        addShape(buttonBg);
+
+        const buttonText = createBaseShape('text', {
+          x, y: y + 10, width, height: 20,
+          fill: style.textColor, stroke: 'transparent', strokeWidth: 0, name: `${text} Button Text`,
+        }) as TextShape;
+        buttonText.text = text;
+        buttonText.fontSize = 14;
+        buttonText.fontFamily = 'Arial';
+        buttonText.fontStyle = 'bold';
+        buttonText.textAlign = 'center';
+        buttonText.textDecoration = 'none';
+        addShape(buttonText);
+
+        return `Created a ${variant} button with text "${text}".`;
+      }
+
       default:
         return `Unknown tool: ${name}`;
     }
-  }, [createBaseShape, findShapeByIdOrName, addShape, updateShape, deleteShape]);
+  }, [createBaseShape, findShapeByIdOrName, addShape, updateShape, deleteShape, clearShapes]);
 
   const processCommand = useCallback(async (command: string): Promise<string> => {
     setIsProcessing(true);

@@ -211,6 +211,140 @@ const canvasTools: OpenAI.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'scaleShape',
+      description: 'Scale a shape by a factor',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: { type: 'string', description: 'ID or name of the shape' },
+          scaleX: { type: 'number', description: 'Horizontal scale factor (1 = 100%)' },
+          scaleY: { type: 'number', description: 'Vertical scale factor (1 = 100%)' },
+        },
+        required: ['shapeId', 'scaleX', 'scaleY'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'duplicateShape',
+      description: 'Create a copy of a shape with an optional offset',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: { type: 'string', description: 'ID or name of the shape to duplicate' },
+          offsetX: { type: 'number', description: 'X offset for the duplicate (default 20)' },
+          offsetY: { type: 'number', description: 'Y offset for the duplicate (default 20)' },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'clearCanvas',
+      description: 'Remove all shapes from the canvas',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'changeOpacity',
+      description: 'Change the opacity of a shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: { type: 'string', description: 'ID or name of the shape' },
+          opacity: { type: 'number', description: 'Opacity value from 0 to 1' },
+        },
+        required: ['shapeId', 'opacity'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'changeStroke',
+      description: 'Change the stroke color and width of a shape',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeId: { type: 'string', description: 'ID or name of the shape' },
+          strokeColor: { type: 'string', description: 'Stroke color (hex)' },
+          strokeWidth: { type: 'number', description: 'Stroke width in pixels' },
+        },
+        required: ['shapeId'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'listShapes',
+      description: 'List all shapes on the canvas with their properties',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'alignShapes',
+      description: 'Align multiple shapes to a specified edge or center',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: { type: 'array', items: { type: 'string' }, description: 'IDs or names of shapes to align' },
+          alignment: { type: 'string', enum: ['left', 'right', 'top', 'bottom', 'centerH', 'centerV'], description: 'Alignment direction' },
+        },
+        required: ['shapeIds', 'alignment'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'distributeShapes',
+      description: 'Distribute shapes evenly in horizontal or vertical direction',
+      parameters: {
+        type: 'object',
+        properties: {
+          shapeIds: { type: 'array', items: { type: 'string' }, description: 'IDs or names of shapes to distribute' },
+          direction: { type: 'string', enum: ['horizontal', 'vertical'], description: 'Distribution direction' },
+        },
+        required: ['shapeIds', 'direction'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'createButton',
+      description: 'Create a styled button component',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Button text' },
+          x: { type: 'number', description: 'X position' },
+          y: { type: 'number', description: 'Y position' },
+          variant: { type: 'string', enum: ['primary', 'secondary', 'outline', 'danger'], description: 'Button style variant' },
+        },
+        required: ['text'],
+      },
+    },
+  },
 ];
 
 export async function POST(request: NextRequest) {
