@@ -10,7 +10,9 @@ import { Header } from './layout/Header';
 import { Toolbar } from './toolbar/Toolbar';
 import { PropertyPanel } from './toolbar/PropertyPanel';
 import { LayersPanel } from './panels/LayersPanel';
+import { PresencePanel } from './panels/PresencePanel';
 import { AIChat } from './ai/AIChat';
+import type { CanvasRef } from './canvas/Canvas';
 
 // Dynamic import Canvas to prevent SSR issues with Konva
 const Canvas = dynamic(() => import('./canvas/Canvas').then((mod) => mod.Canvas), {
@@ -28,6 +30,7 @@ interface CanvasPageProps {
 
 export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<CanvasRef>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [showLayers, setShowLayers] = useState(true);
   const [showProperties, setShowProperties] = useState(true);
@@ -78,28 +81,46 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
     [updateCursorPosition]
   );
 
+  // Helper to download a data URL
+  const downloadDataURL = useCallback((dataURL: string, filename: string) => {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
+
   // Handle export
   const handleExport = useCallback(
     (format: 'png' | 'svg' | 'json') => {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
       if (format === 'json') {
         const data = JSON.stringify({ shapes, canvasId }, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `canvas-${canvasId}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        downloadDataURL(url, `canvas-${canvasId}-${timestamp}.json`);
         URL.revokeObjectURL(url);
-      } else {
-        // For PNG/SVG, we need to access the Konva stage
-        // This would be implemented with a ref to the stage
-        console.log(`Exporting as ${format}...`);
-        alert(`${format.toUpperCase()} export would be implemented with Konva stage.toDataURL()`);
+      } else if (format === 'png') {
+        const dataURL = canvasRef.current?.exportToPNG();
+        if (dataURL) {
+          downloadDataURL(dataURL, `canvas-${canvasId}-${timestamp}.png`);
+        } else {
+          console.error('Failed to export PNG - canvas ref not available');
+        }
+      } else if (format === 'svg') {
+        // SVG export uses PNG for now (Konva limitation)
+        const dataURL = canvasRef.current?.exportToSVG();
+        if (dataURL) {
+          // Since Konva exports as PNG, we'll download as PNG with svg extension note
+          downloadDataURL(dataURL, `canvas-${canvasId}-${timestamp}.png`);
+        } else {
+          console.error('Failed to export SVG - canvas ref not available');
+        }
       }
     },
-    [shapes, canvasId]
+    [shapes, canvasId, downloadDataURL]
   );
 
   // Handle AI commands
@@ -134,11 +155,17 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
         e.preventDefault();
         setShowProperties((prev) => !prev);
       }
+
+      // Export shortcuts
+      if (e.key === 'e' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault();
+        handleExport('png');
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleExport]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden">
@@ -162,6 +189,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
               </button>
             </div>
             <LayersPanel />
+            <PresencePanel />
           </div>
         )}
 
@@ -205,14 +233,30 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
 
             {/* Connection status indicator */}
             {connectionStatus !== 'connected' && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full z-10">
-                {connectionStatus === 'connecting' && 'Connecting...'}
-                {connectionStatus === 'reconnecting' && 'Reconnecting...'}
-                {connectionStatus === 'disconnected' && 'Disconnected'}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full z-10 flex items-center gap-2">
+                {connectionStatus === 'connecting' && (
+                  <>
+                    <span className="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span>
+                    Connecting...
+                  </>
+                )}
+                {connectionStatus === 'reconnecting' && (
+                  <>
+                    <span className="animate-pulse w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Reconnecting...
+                  </>
+                )}
+                {connectionStatus === 'disconnected' && (
+                  <>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    Disconnected
+                  </>
+                )}
               </div>
             )}
 
             <Canvas
+              ref={canvasRef}
               width={dimensions.width}
               height={dimensions.height}
               onCursorMove={handleCursorMove}
