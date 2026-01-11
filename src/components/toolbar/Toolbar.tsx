@@ -146,7 +146,7 @@ export const Toolbar: React.FC = () => {
   }, [setCurrentTool, undo, redo, canUndo, canRedo]);
 
   return (
-    <div className="flex items-center gap-1 p-2 bg-white rounded-xl shadow-lg border border-gray-200">
+    <div data-testid="toolbar" className="flex items-center gap-1 p-2 bg-white rounded-xl shadow-lg border border-gray-200">
       {/* Selection Tools */}
       <div className="flex items-center gap-1 pr-2 border-r border-gray-200">
         <ToolButton
