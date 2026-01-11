@@ -1,6 +1,6 @@
 // Canvas Types for CollabCanvas
 
-export type ShapeType = 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'image';
+export type ShapeType = 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'image' | 'frame';
 
 export interface Point {
   x: number;
@@ -164,7 +164,7 @@ export interface SelectionState {
 }
 
 export interface CanvasTool {
-  type: 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'pan' | 'hand';
+  type: 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'triangle' | 'star' | 'pan' | 'hand' | 'frame' | 'comment';
 }
 
 export interface SnapGuide {
@@ -212,4 +212,44 @@ export interface CanvasVersion {
   timestamp: number;
   createdBy: string;
   createdByName: string;
+}
+
+// Comment/Annotation types
+export interface Comment {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  userId: string;
+  userName: string;
+  userColor: string;
+  shapeId?: string; // Optional: attach comment to a specific shape
+  resolved: boolean;
+  createdAt: number;
+  updatedAt: number;
+  replies: CommentReply[];
+}
+
+export interface CommentReply {
+  id: string;
+  text: string;
+  userId: string;
+  userName: string;
+  userColor: string;
+  createdAt: number;
+}
+
+// Auto-layout types
+export interface AutoLayoutConfig {
+  direction: 'horizontal' | 'vertical';
+  gap: number;
+  padding: number;
+  alignment: 'start' | 'center' | 'end' | 'stretch';
+  wrap: boolean;
+}
+
+export interface Frame extends BaseShape {
+  type: 'frame';
+  autoLayout?: AutoLayoutConfig;
+  childIds: string[];
 }

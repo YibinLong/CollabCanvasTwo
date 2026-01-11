@@ -11,7 +11,9 @@ import { Toolbar } from './toolbar/Toolbar';
 import { PropertyPanel } from './toolbar/PropertyPanel';
 import { LayersPanel } from './panels/LayersPanel';
 import { PresencePanel } from './panels/PresencePanel';
+import { CommentsPanel } from './panels/CommentsPanel';
 import { AIChat } from './ai/AIChat';
+import { shapesToSVG, downloadSVG, exportToJSON } from '@/lib/exportUtils';
 import type { CanvasRef } from './canvas/Canvas';
 
 // Dynamic import Canvas to prevent SSR issues with Konva
@@ -97,7 +99,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 
       if (format === 'json') {
-        const data = JSON.stringify({ shapes, canvasId }, null, 2);
+        const data = exportToJSON(shapes, canvasId, { name: `Canvas Export ${timestamp}` });
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         downloadDataURL(url, `canvas-${canvasId}-${timestamp}.json`);
@@ -110,17 +112,21 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
           console.error('Failed to export PNG - canvas ref not available');
         }
       } else if (format === 'svg') {
-        // SVG export uses PNG for now (Konva limitation)
-        const dataURL = canvasRef.current?.exportToSVG();
-        if (dataURL) {
-          // Since Konva exports as PNG, we'll download as PNG with svg extension note
-          downloadDataURL(dataURL, `canvas-${canvasId}-${timestamp}.png`);
+        // Use our custom SVG export
+        const shapeArray = Object.values(shapes);
+        if (shapeArray.length > 0) {
+          const svgString = shapesToSVG(shapeArray, {
+            width: dimensions.width,
+            height: dimensions.height,
+            background: '#ffffff',
+          });
+          downloadSVG(svgString, `canvas-${canvasId}-${timestamp}.svg`);
         } else {
-          console.error('Failed to export SVG - canvas ref not available');
+          console.error('No shapes to export');
         }
       }
     },
-    [shapes, canvasId, downloadDataURL]
+    [shapes, canvasId, downloadDataURL, dimensions]
   );
 
   // Handle AI commands
@@ -190,6 +196,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
             </div>
             <LayersPanel />
             <PresencePanel />
+            <CommentsPanel />
           </div>
         )}
 

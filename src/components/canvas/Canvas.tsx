@@ -6,11 +6,14 @@ import Konva from 'konva';
 import { nanoid } from 'nanoid';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
+import { useCommentStore } from '@/store/commentStore';
 import { CanvasShape } from './CanvasShape';
 import { MultiplayerCursor } from './MultiplayerCursor';
 import { SelectionBox } from './SelectionBox';
 import { Grid } from './Grid';
-import type { CanvasShape as CanvasShapeType } from '@/types/canvas';
+import { CommentMarker } from './CommentMarker';
+import { SmartGuides, getShapeBounds, calculateSnapGuides } from './SmartGuides';
+import type { CanvasShape as CanvasShapeType, SnapGuide } from '@/types/canvas';
 
 interface CanvasProps {
   width: number;
@@ -51,6 +54,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
   const [tempShape, setTempShape] = useState<CanvasShapeType | null>(null);
+  const [activeGuides, setActiveGuides] = useState<SnapGuide[]>([]);
 
   const {
     shapes,
@@ -90,6 +94,17 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
   } = useCanvasStore();
 
   const { currentUser, cursors } = useUserStore();
+
+  const {
+    comments,
+    activeCommentId,
+    isAddingComment,
+    setActiveCommentId,
+    addComment,
+    updateComment,
+    setIsAddingComment,
+    setPendingCommentPosition,
+  } = useCommentStore();
 
   // Sort shapes by zIndex for proper layering
   const sortedShapes = useMemo(() => {
@@ -219,6 +234,22 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
       // Check if clicking on empty area
       const clickedOnEmpty = e.target === e.target.getStage();
 
+      // Handle comment tool - add comment on click
+      if (currentTool.type === 'comment' || isAddingComment) {
+        if (clickedOnEmpty && currentUser) {
+          addComment({
+            x: pos.x,
+            y: pos.y,
+            text: 'New comment',
+            userId: currentUser.id,
+            userName: currentUser.displayName,
+            userColor: currentUser.color,
+          });
+          setIsAddingComment(false);
+        }
+        return;
+      }
+
       // Handle pan tool
       if (currentTool.type === 'pan' || currentTool.type === 'hand') {
         setIsDraggingStage(true);
@@ -229,6 +260,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
       if (currentTool.type === 'select') {
         if (clickedOnEmpty) {
           clearSelection();
+          setActiveCommentId(null);
           // Start selection box
           setSelectionBox({
             x: snappedPos.x,
@@ -249,7 +281,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
         setTempShape(defaultShape);
       }
     },
-    [currentTool, getPointerPosition, snapPosition, clearSelection, setSelectionBox]
+    [currentTool, getPointerPosition, snapPosition, clearSelection, setSelectionBox, isAddingComment, currentUser, addComment, setIsAddingComment, setActiveCommentId]
   );
 
   // Handle mouse up
@@ -329,7 +361,7 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
     [currentTool, selectedIds, setSelectedIds, addToSelection]
   );
 
-  // Handle shape update
+  // Handle shape update with smart guides
   const handleShapeChange = useCallback(
     (shapeId: string, updates: Partial<CanvasShapeType>) => {
       updateShape(shapeId, {
@@ -339,6 +371,46 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
     },
     [updateShape, currentUser]
   );
+
+  // Handle shape drag with smart guides
+  const handleShapeDrag = useCallback(
+    (shapeId: string, x: number, y: number) => {
+      const shape = shapes[shapeId];
+      if (!shape || !snapToGrid) {
+        setActiveGuides([]);
+        return { x, y };
+      }
+
+      const movingBounds = getShapeBounds({
+        id: shapeId,
+        x,
+        y,
+        width: shape.width,
+        height: shape.height,
+        scaleX: shape.scaleX,
+        scaleY: shape.scaleY,
+      });
+
+      const otherBounds = Object.values(shapes)
+        .filter((s) => s.id !== shapeId && s.visible && !s.locked)
+        .map((s) => getShapeBounds(s));
+
+      const result = calculateSnapGuides(movingBounds, otherBounds);
+
+      setActiveGuides(result.guides);
+
+      return {
+        x: result.snapX !== null ? result.snapX : x,
+        y: result.snapY !== null ? result.snapY : y,
+      };
+    },
+    [shapes, snapToGrid]
+  );
+
+  // Clear guides when drag ends
+  const handleShapeDragEnd = useCallback(() => {
+    setActiveGuides([]);
+  }, []);
 
   // Create default shape based on tool type
   const createDefaultShape = (
@@ -544,12 +616,15 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
 
   // Determine cursor style
   const getCursorStyle = () => {
+    if (isAddingComment) return 'crosshair';
     switch (currentTool.type) {
       case 'pan':
       case 'hand':
         return isDraggingStage ? 'grabbing' : 'grab';
       case 'select':
         return 'default';
+      case 'comment':
+        return 'crosshair';
       default:
         return 'crosshair';
     }
@@ -622,6 +697,28 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ width, height, onCur
               height={selectionBox.height}
             />
           )}
+
+          {/* Smart guides */}
+          {activeGuides.length > 0 && (
+            <SmartGuides
+              guides={activeGuides}
+              viewportWidth={width / scale}
+              viewportHeight={height / scale}
+            />
+          )}
+        </Layer>
+
+        {/* Comments Layer */}
+        <Layer>
+          {Object.values(comments).map((comment) => (
+            <CommentMarker
+              key={comment.id}
+              comment={comment}
+              isActive={activeCommentId === comment.id}
+              onClick={() => setActiveCommentId(comment.id)}
+              onDragEnd={(x, y) => updateComment(comment.id, { x, y })}
+            />
+          ))}
         </Layer>
 
         {/* Cursors Layer */}
