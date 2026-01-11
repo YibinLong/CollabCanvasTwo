@@ -1,36 +1,35 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { nanoid } from 'nanoid';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { CanvasPage } from '@/components/CanvasPage';
 
+// Initialize canvas ID outside of component to avoid re-renders
+const getInitialCanvasId = (): string => {
+  if (typeof window === 'undefined') return '';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCanvasId = urlParams.get('canvas');
+
+  if (urlCanvasId) return urlCanvasId;
+
+  const savedCanvasId = localStorage.getItem('lastCanvasId');
+  if (savedCanvasId) return savedCanvasId;
+
+  const newCanvasId = nanoid(10);
+  localStorage.setItem('lastCanvasId', newCanvasId);
+  return newCanvasId;
+};
+
 export default function Home() {
   const { isAuthenticated, isLoading, currentUser } = useAuth();
-  const [canvasId, setCanvasId] = useState<string>('');
 
-  // Generate or retrieve canvas ID
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlCanvasId = urlParams.get('canvas');
-
-      if (urlCanvasId) {
-        setCanvasId(urlCanvasId);
-      } else {
-        // Check localStorage for last used canvas
-        const savedCanvasId = localStorage.getItem('lastCanvasId');
-        if (savedCanvasId) {
-          setCanvasId(savedCanvasId);
-        } else {
-          // Generate new canvas ID
-          const newCanvasId = nanoid(10);
-          setCanvasId(newCanvasId);
-          localStorage.setItem('lastCanvasId', newCanvasId);
-        }
-      }
-    }
+  // Use useMemo to compute canvas ID only once on client
+  const canvasId = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    return getInitialCanvasId();
   }, []);
 
   // Save canvas ID to URL when it changes

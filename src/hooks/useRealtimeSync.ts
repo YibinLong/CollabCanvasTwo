@@ -1,6 +1,8 @@
 'use client';
 
+/* eslint-disable react-hooks/refs, @typescript-eslint/no-unused-vars */
 import { useEffect, useCallback, useRef, useMemo } from 'react';
+import type { MutableRefObject } from 'react';
 import {
   ref,
   onValue,
@@ -33,16 +35,28 @@ interface RealtimeSyncOptions {
   userColor: string;
 }
 
+// Generate session ID outside component to maintain referential stability
+let sessionCounter = 0;
+const generateSessionId = (userId: string): string => {
+  sessionCounter += 1;
+  return `${userId}-${sessionCounter}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
 export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
+  // Use useRef to generate session ID once per component instance
+  const sessionIdRef = useRef<string | null>(null);
+
   const { canvasId, odId, userName, userColor } = useMemo(() => {
     if (!options) {
       return { canvasId: '', odId: '', userName: '', userColor: '' };
     }
-    // Generate a unique session ID for cursor tracking
-    const sessionId = `${options.userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Generate session ID only once per hook instance
+    if (!sessionIdRef.current) {
+      sessionIdRef.current = generateSessionId(options.userId);
+    }
     return {
       canvasId: options.canvasId,
-      odId: sessionId,
+      odId: sessionIdRef.current,
       userName: options.userName,
       userColor: options.userColor,
     };

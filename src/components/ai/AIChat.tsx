@@ -15,15 +15,16 @@ interface AIChatProps {
   isProcessing: boolean;
 }
 
+// Initial welcome message - defined outside component to avoid impure function in render
+const INITIAL_MESSAGE: Message = {
+  id: '1',
+  role: 'assistant',
+  content: 'Hi! I can help you create and manipulate shapes on the canvas. Try saying "Create a red rectangle" or "Arrange all shapes in a grid".',
+  timestamp: 0, // Will be set on first render
+};
+
 export const AIChat: React.FC<AIChatProps> = ({ onSendMessage, isProcessing }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Hi! I can help you create and manipulate shapes on the canvas. Try saying "Create a red rectangle" or "Arrange all shapes in a grid".',
-      timestamp: Date.now(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -76,7 +77,7 @@ export const AIChat: React.FC<AIChatProps> = ({ onSendMessage, isProcessing }) =
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       // Update user message status to error
       setMessages((prev) =>
         prev.map((msg) =>

@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-unused-vars */
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
   Rect,

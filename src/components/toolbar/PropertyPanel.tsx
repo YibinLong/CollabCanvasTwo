@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useCanvasStore } from '@/store/canvasStore';
 import { useUserStore } from '@/store/userStore';
 import { ColorPicker } from '@/components/ui/ColorPicker';
@@ -26,29 +26,33 @@ export const PropertyPanel: React.FC = () => {
   const selectedShapes = selectedIds.map((id) => shapes[id]).filter(Boolean) as CanvasShape[];
   const singleShape = selectedShapes.length === 1 ? selectedShapes[0] : null;
 
+  // Use useMemo to derive local values from singleShape to avoid setState in effect
+  const derivedValues = React.useMemo(() => {
+    if (!singleShape) return null;
+    return {
+      x: Math.round(singleShape.x),
+      y: Math.round(singleShape.y),
+      width: Math.round(singleShape.width),
+      height: Math.round(singleShape.height),
+      rotation: Math.round(singleShape.rotation),
+      fill: singleShape.fill,
+      stroke: singleShape.stroke,
+      strokeWidth: singleShape.strokeWidth,
+      opacity: singleShape.opacity,
+      name: singleShape.name,
+    };
+  }, [singleShape]);
+
   const [localValues, setLocalValues] = useState<Partial<CanvasShape>>({});
+  const [hasLocalEdits, setHasLocalEdits] = useState(false);
 
   // Check if selected shapes are in a group
   const selectedGroupId = singleShape?.groupId;
   const canGroup = selectedIds.length >= 2;
   const canUngroup = selectedGroupId && groups[selectedGroupId];
 
-  useEffect(() => {
-    if (singleShape) {
-      setLocalValues({
-        x: Math.round(singleShape.x),
-        y: Math.round(singleShape.y),
-        width: Math.round(singleShape.width),
-        height: Math.round(singleShape.height),
-        rotation: Math.round(singleShape.rotation),
-        fill: singleShape.fill,
-        stroke: singleShape.stroke,
-        strokeWidth: singleShape.strokeWidth,
-        opacity: singleShape.opacity,
-        name: singleShape.name,
-      });
-    }
-  }, [singleShape]);
+  // Reset local values when shape changes (not using setState in effect)
+  const effectiveValues = hasLocalEdits ? localValues : (derivedValues || {});
 
   const handleUpdate = useCallback(
     (updates: Partial<CanvasShape>) => {
@@ -75,6 +79,7 @@ export const PropertyPanel: React.FC = () => {
   );
 
   const handleInputChange = useCallback((key: keyof CanvasShape, value: string | number) => {
+    setHasLocalEdits(true);
     setLocalValues((prev) => ({ ...prev, [key]: value }));
   }, []);
 
@@ -83,6 +88,7 @@ export const PropertyPanel: React.FC = () => {
       const value = localValues[key];
       if (value !== undefined) {
         handleUpdate({ [key]: value });
+        setHasLocalEdits(false);
       }
     },
     [localValues, handleUpdate]
@@ -279,7 +285,7 @@ export const PropertyPanel: React.FC = () => {
         <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Name</label>
         <input
           type="text"
-          value={localValues.name || ''}
+          value={effectiveValues.name || ''}
           onChange={(e) => handleInputChange('name', e.target.value)}
           onBlur={() => handleInputBlur('name')}
           className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -292,13 +298,13 @@ export const PropertyPanel: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           <PropertyInput
             label="X"
-            value={localValues.x || 0}
+            value={effectiveValues.x || 0}
             onChange={(v) => handleInputChange('x', v)}
             onBlur={() => handleInputBlur('x')}
           />
           <PropertyInput
             label="Y"
-            value={localValues.y || 0}
+            value={effectiveValues.y || 0}
             onChange={(v) => handleInputChange('y', v)}
             onBlur={() => handleInputBlur('y')}
           />
@@ -311,13 +317,13 @@ export const PropertyPanel: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           <PropertyInput
             label="W"
-            value={localValues.width || 0}
+            value={effectiveValues.width || 0}
             onChange={(v) => handleInputChange('width', Math.max(1, v))}
             onBlur={() => handleInputBlur('width')}
           />
           <PropertyInput
             label="H"
-            value={localValues.height || 0}
+            value={effectiveValues.height || 0}
             onChange={(v) => handleInputChange('height', Math.max(1, v))}
             onBlur={() => handleInputBlur('height')}
           />
@@ -329,7 +335,7 @@ export const PropertyPanel: React.FC = () => {
         <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Rotation</h4>
         <PropertyInput
           label="°"
-          value={localValues.rotation || 0}
+          value={effectiveValues.rotation || 0}
           onChange={(v) => handleInputChange('rotation', v)}
           onBlur={() => handleInputBlur('rotation')}
           suffix
@@ -339,7 +345,7 @@ export const PropertyPanel: React.FC = () => {
       {/* Colors with new ColorPicker */}
       <div className="mb-4">
         <ColorPicker
-          color={localValues.fill || '#3B82F6'}
+          color={effectiveValues.fill || '#3B82F6'}
           onChange={(color) => {
             handleInputChange('fill', color);
             handleUpdate({ fill: color });
@@ -350,7 +356,7 @@ export const PropertyPanel: React.FC = () => {
 
       <div className="mb-4">
         <ColorPicker
-          color={localValues.stroke || '#1E40AF'}
+          color={effectiveValues.stroke || '#1E40AF'}
           onChange={(color) => {
             handleInputChange('stroke', color);
             handleUpdate({ stroke: color });
@@ -360,7 +366,7 @@ export const PropertyPanel: React.FC = () => {
         <div className="mt-2">
           <PropertyInput
             label="Width"
-            value={localValues.strokeWidth || 0}
+            value={effectiveValues.strokeWidth || 0}
             onChange={(v) => handleInputChange('strokeWidth', Math.max(0, v))}
             onBlur={() => handleInputBlur('strokeWidth')}
           />
@@ -375,7 +381,7 @@ export const PropertyPanel: React.FC = () => {
           min="0"
           max="1"
           step="0.01"
-          value={localValues.opacity || 1}
+          value={effectiveValues.opacity || 1}
           onChange={(e) => {
             const value = parseFloat(e.target.value);
             handleInputChange('opacity', value);
@@ -383,7 +389,7 @@ export const PropertyPanel: React.FC = () => {
           }}
           className="w-full"
         />
-        <span className="text-xs text-gray-500">{Math.round((localValues.opacity || 1) * 100)}%</span>
+        <span className="text-xs text-gray-500">{Math.round((effectiveValues.opacity || 1) * 100)}%</span>
       </div>
 
       {/* Blend Mode */}

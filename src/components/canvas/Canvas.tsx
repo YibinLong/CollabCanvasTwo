@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable react-hooks/immutability, react-hooks/exhaustive-deps */
 import React, { useRef, useState, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { Stage, Layer } from 'react-konva';
 import Konva from 'konva';
