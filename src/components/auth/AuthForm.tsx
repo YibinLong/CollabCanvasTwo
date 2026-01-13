@@ -15,7 +15,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInAsGuest } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +54,25 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
 
     try {
       const result = await signInWithGoogle();
+      if (result.success) {
+        onSuccess?.();
+      } else {
+        setError(result.error || 'An error occurred');
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const result = await signInAsGuest();
       if (result.success) {
         onSuccess?.();
       } else {
@@ -210,6 +229,25 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           <GoogleIcon />
           Continue with Google
         </button>
+
+        {/* Guest Sign In */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <button
+            onClick={handleGuestSignIn}
+            disabled={isLoading}
+            aria-label="Try without an account"
+            title="Try without an account"
+            className={`w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg font-medium transition-all flex items-center justify-center gap-2
+              ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-200'}
+            `}
+          >
+            <GuestIcon />
+            Try without an account
+          </button>
+          <p className="text-xs text-gray-500 text-center mt-2">
+            Your work won&apos;t be saved to the cloud
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -252,5 +290,12 @@ const GoogleIcon = () => (
       fill="#EA4335"
       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
     />
+  </svg>
+);
+
+const GuestIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M20 21a8 8 0 1 0-16 0" />
   </svg>
 );
