@@ -53,6 +53,7 @@ export const CanvasPage: React.FC<CanvasPageProps> = ({ canvasId }) => {
         userId: currentUser.id,
         userName: currentUser.displayName,
         userColor: currentUser.color,
+        isGuest: currentUser.isGuest,
       }
     : null;
 

@@ -34,6 +34,7 @@ interface RealtimeSyncOptions {
   userId: string;
   userName: string;
   userColor: string;
+  isGuest?: boolean;
 }
 
 // Offline queue types
@@ -59,9 +60,9 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
   // Use useRef to generate session ID once per component instance
   const sessionIdRef = useRef<string | null>(null);
 
-  const { canvasId, odId, userName, userColor } = useMemo(() => {
+  const { canvasId, odId, userName, userColor, isGuest } = useMemo(() => {
     if (!options) {
-      return { canvasId: '', odId: '', userName: '', userColor: '' };
+      return { canvasId: '', odId: '', userName: '', userColor: '', isGuest: false };
     }
     // Generate session ID only once per hook instance
     if (!sessionIdRef.current) {
@@ -72,6 +73,7 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
       odId: sessionIdRef.current,
       userName: options.userName,
       userColor: options.userColor,
+      isGuest: options.isGuest || false,
     };
   }, [options]);
 
@@ -420,7 +422,7 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
 
   // Listen to cursor updates from Realtime Database
   useEffect(() => {
-    if (!canvasId || !userId) return;
+    if (!canvasId || !userId || isGuest) return;
 
     const cursorsRef = ref(rtdb, `canvases/${canvasId}/cursors`);
 
@@ -444,11 +446,11 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     });
 
     return () => unsubscribe();
-  }, [canvasId, userId, setCursors]);
+  }, [canvasId, userId, isGuest, setCursors]);
 
   // Listen to presence updates from Realtime Database
   useEffect(() => {
-    if (!canvasId) return;
+    if (!canvasId || isGuest) return;
 
     const presenceRef = ref(rtdb, `canvases/${canvasId}/presence`);
 
@@ -476,11 +478,11 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     });
 
     return () => unsubscribe();
-  }, [canvasId, setOnlineUsers]);
+  }, [canvasId, isGuest, setOnlineUsers]);
 
   // Listen to shape updates from Firestore
   useEffect(() => {
-    if (!canvasId) return;
+    if (!canvasId || isGuest) return;
 
     const shapesRef = collection(db, `canvases/${canvasId}/shapes`);
     const shapesQuery = query(shapesRef, orderBy('createdAt', 'asc'));
@@ -517,18 +519,24 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     );
 
     return () => unsubscribe();
-  }, [canvasId, setShapes, setConnectionStatus]);
+  }, [canvasId, isGuest, setShapes, setConnectionStatus]);
 
   // Set up presence on mount
   useEffect(() => {
-    if (!canvasId || !userId) return;
+    if (!canvasId || !userId || isGuest) return;
 
     const cleanup = setupPresence();
     return cleanup;
-  }, [canvasId, userId, setupPresence]);
+  }, [canvasId, userId, isGuest, setupPresence]);
 
-  // Sync local shape changes to Firestore
+  // Sync local shape changes to Firestore (skip for guests)
   useEffect(() => {
+    if (isGuest) {
+      // For guests, just update local ref without syncing
+      localShapesRef.current = { ...shapes };
+      return;
+    }
+
     // Compare current shapes with local reference and sync differences
     const currentShapeIds = Object.keys(shapes);
     const localShapeIds = Object.keys(localShapesRef.current);
@@ -551,11 +559,11 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     });
 
     localShapesRef.current = { ...shapes };
-  }, [shapes, debouncedSyncShape, syncShapeDeletion]);
+  }, [shapes, isGuest, debouncedSyncShape, syncShapeDeletion]);
 
   // Listen to comment updates from Firestore
   useEffect(() => {
-    if (!canvasId) return;
+    if (!canvasId || isGuest) return;
 
     const commentsRef = collection(db, `canvases/${canvasId}/comments`);
     const commentsQuery = query(commentsRef, orderBy('createdAt', 'asc'));
@@ -593,10 +601,15 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     );
 
     return () => unsubscribe();
-  }, [canvasId, setComments]);
+  }, [canvasId, isGuest, setComments]);
 
-  // Sync local comment changes to Firestore
+  // Sync local comment changes to Firestore (skip for guests)
   useEffect(() => {
+    if (isGuest) {
+      localCommentsRef.current = { ...comments };
+      return;
+    }
+
     const currentCommentIds = Object.keys(comments);
     const localCommentIds = Object.keys(localCommentsRef.current);
 
@@ -618,11 +631,11 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     });
 
     localCommentsRef.current = { ...comments };
-  }, [comments, debouncedSyncComment, syncCommentDeletion]);
+  }, [comments, isGuest, debouncedSyncComment, syncCommentDeletion]);
 
   // Listen to version updates from Firestore
   useEffect(() => {
-    if (!canvasId) return;
+    if (!canvasId || isGuest) return;
 
     const versionsRef = collection(db, `canvases/${canvasId}/versions`);
     const versionsQuery = query(versionsRef, orderBy('timestamp', 'desc'));
@@ -653,10 +666,15 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     );
 
     return () => unsubscribe();
-  }, [canvasId, setVersions]);
+  }, [canvasId, isGuest, setVersions]);
 
-  // Sync local version changes to Firestore
+  // Sync local version changes to Firestore (skip for guests)
   useEffect(() => {
+    if (isGuest) {
+      localVersionsRef.current = [...versions];
+      return;
+    }
+
     const currentVersionIds = versions.map((v) => v.id);
     const localVersionIds = localVersionsRef.current.map((v) => v.id);
 
@@ -677,7 +695,7 @@ export const useRealtimeSync = (options: RealtimeSyncOptions | null) => {
     });
 
     localVersionsRef.current = [...versions];
-  }, [versions, syncVersionToFirestore, syncVersionDeletion]);
+  }, [versions, isGuest, syncVersionToFirestore, syncVersionDeletion]);
 
   return {
     updateCursorPosition,
