@@ -12,6 +12,7 @@ import {
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { auth, db } from '@/lib/firebase/config';
 import { useUserStore, generateUserColor } from '@/store/userStore';
 import type { User } from '@/types/canvas';
@@ -40,8 +41,9 @@ export const useAuth = () => {
     };
   }, []);
 
-  // Save user to Firestore
+  // Save user to Firestore (skip for guest users)
   const saveUserToFirestore = useCallback(async (user: User) => {
+    if (user.isGuest) return; // Don't save guest users to database
     try {
       const userRef = doc(db, 'users', user.id);
       await setDoc(
@@ -66,8 +68,12 @@ export const useAuth = () => {
         setIsAuthenticated(true);
         await saveUserToFirestore(user);
       } else {
-        setCurrentUser(null);
-        setIsAuthenticated(false);
+        // Only reset auth state if we don't have a guest user
+        const { currentUser } = useUserStore.getState();
+        if (!currentUser?.isGuest) {
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
       }
       setIsLoading(false);
     });
@@ -130,11 +136,36 @@ export const useAuth = () => {
     }
   }, [firebaseUserToUser, saveUserToFirestore, setIsLoading]);
 
+  // Sign in as guest (no account required)
+  const signInAsGuest = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const guestId = `guest_${nanoid(10)}`;
+      const guestUser: User = {
+        id: guestId,
+        email: '',
+        displayName: `Guest ${guestId.slice(-4)}`,
+        color: generateUserColor(guestId),
+        isOnline: true,
+        lastSeen: Date.now(),
+        isGuest: true,
+      };
+      setCurrentUser(guestUser);
+      setIsAuthenticated(true);
+      return { success: true, user: guestUser };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Guest sign in failed';
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setCurrentUser, setIsAuthenticated, setIsLoading]);
+
   // Sign out
   const logout = useCallback(async () => {
     try {
-      // Update user's online status before signing out
-      if (currentUser) {
+      // Update user's online status before signing out (skip for guests)
+      if (currentUser && !currentUser.isGuest) {
         const userRef = doc(db, 'users', currentUser.id);
         await setDoc(
           userRef,
@@ -144,8 +175,8 @@ export const useAuth = () => {
           },
           { merge: true }
         );
+        await signOut(auth);
       }
-      await signOut(auth);
       storeLogout();
       return { success: true };
     } catch (error: unknown) {
@@ -176,6 +207,7 @@ export const useAuth = () => {
     signIn,
     signUp,
     signInWithGoogle,
+    signInAsGuest,
     logout,
     getUserFromFirestore,
   };
