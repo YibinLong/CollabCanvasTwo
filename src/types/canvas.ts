@@ -180,6 +180,7 @@ export interface User {
   color: string;
   isOnline: boolean;
   lastSeen: number;
+  isGuest?: boolean;
 }
 
 export interface CanvasState {
